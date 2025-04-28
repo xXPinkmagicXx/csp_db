@@ -4,8 +4,6 @@ services:
   group12-postgres:
     build: .
     container_name: group12-postgres
-    ports:
-      - "5432:5432"
     env_file:
     - .env
     volumes:
