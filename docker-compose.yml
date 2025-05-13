@@ -11,7 +11,7 @@ services:
       - ./init:/docker-entrypoint-initdb.d
       - ./data/${SCALE}/:/data
       - ./queries/${SCALE}/:/queries
-      - group12-pgdata:/var/lib/postgresql/data
+      - group12-pgdata-${SCALE}:/var/lib/postgresql/data
     restart: unless-stopped
     command: >
       postgres
@@ -19,4 +19,6 @@ services:
       -c checkpoint_timeout=15min
        
 volumes:
-  group12-pgdata:
+  group12-pgdata-sf1:
+  group12-pgdata-sf10:
+  group12-pgdata-sf25:
