@@ -12,6 +12,6 @@ Then the generated files could be placed into data/sf1 folder.
 You have to set the env values in the .env file. These determine which dataset is loaded into the db on start and what schema to use. Example:
 ```
 SCALE=sf1
-SCHEMA=schema.sql
+SCRIPT=base_index.sql
 ```
 After this a simple docker compose command should do the trick and the database should be accessible.

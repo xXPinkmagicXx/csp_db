@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-echo "Loading schema: $SCHEMA"
+echo "Loading schema..."
 mkdir -p /tmp/init_scripts
-cp "/schemas/${SCHEMA}" /tmp/init_scripts/00_schema.sql
+cp "/schema.sql" /tmp/init_scripts/00_schema.sql
 psql -U postgres -d tpch -f /tmp/init_scripts/00_schema.sql
 
 

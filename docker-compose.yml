@@ -7,8 +7,8 @@ services:
     env_file:
     - .env
     volumes:
-      - ./schemas:/schemas
-      - ./init:/docker-entrypoint-initdb.d
+      - ./scripts:/scripts
+      - ./schema.sql:/schema.sql
       - ./data/${SCALE}/:/data
       - ./queries/${SCALE}/:/queries
       - group12-pgdata-${SCALE}:/var/lib/postgresql/data
