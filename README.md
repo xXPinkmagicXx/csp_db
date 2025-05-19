@@ -59,8 +59,12 @@ CREATE DATABASE <database_name>
 ```
 
 See databases inside postgres
-```
+```bash
 \l+
+```
+
+```bash
+SELECT datname FROM pg_database;
 ```
 
 Connect to `<db_name>`inside postgres
@@ -70,7 +74,7 @@ Connect to `<db_name>`inside postgres
 
 - \q = quit
 - \c = connect to db
-- \dn
+- \dn = list schemas in current database
 - \dt
 
 ## Ideas
