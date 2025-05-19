@@ -12,6 +12,14 @@ Then the generated files could be placed into data/sf1 folder.
 You have to set the env values in the .env file. These determine which dataset is loaded into the db on start and what schema to use. Example:
 ```
 SCALE=sf1
-SCRIPT=base_index.sql
 ```
+Other needed env variables can be seen in the example.env file.
+
 After this a simple docker compose command should do the trick and the database should be accessible.
+
+### Run test query
+To run a specific query out of the possible 22 run the run_query.sh script with the query's number you want executed.
+For example to run query 4:
+```
+./run_query.sh 4
+```
