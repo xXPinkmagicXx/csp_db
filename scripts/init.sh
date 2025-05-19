@@ -16,13 +16,15 @@ done
 
 echo "Postgres is ready. Running schema.sql..."
 
-# PGPASSWORD=password psql -U postgres -h group12-postgres -p 5432 -c "CREATE DATABASE testdb IF NOT EXIST"
 # Creating tables if they do not exist
+echo "[Info] Creating tables (if they do not exist)"
 psql -U postgres -h localhost -p 5432 -d tpch -f ./schema.sql
 
 # Drop all indexes
+echo "[Info] Dropping all indexes"
 psql -U postgres -h localhost -p 5432 -d tpch -f ./scripts/drop_all_indexes.sql
 
 # Add the current indexes that is used for experiment
+echo "[Info] Creating indexes for dates"
 psql -U postgres -h localhost -p 5432 -d tpch -f ./scripts/dates_index.sql
 
