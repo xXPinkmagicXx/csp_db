@@ -31,7 +31,7 @@ docker-compose run --rm --service-ports --entrypoint bash group12-postgres
 Run sql file such as `schema.sql`
 
 ```bash
-PGPASSWORD=password psql -U postgres -h group12-postgres -p 5432 -d testdb -f ./schema.sql
+PGPASSWORD=password psql -U postgres -h group12-postgres -p $PGPORT -d testdb -f ./schema.sql
 ```
 
 ## Useful commands
@@ -70,6 +70,8 @@ Connect to `<db_name>`inside postgres
 
 - \q = quit
 - \c = connect to db
+- \dn
+- \dt
 
 ## Ideas
 
