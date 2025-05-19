@@ -14,7 +14,7 @@ services:
       - group12-pgdata-${SCALE}:/var/lib/postgresql/data
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      - "8432:5432"
     command: >
       postgres
       -c max_wal_size=2GB
