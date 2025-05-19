@@ -9,8 +9,3 @@ RUN apt-get update && apt-get install -y \
 # Copy init scripts
 COPY init/load_data.sh /docker-entrypoint-initdb.d/load_data.sh
 RUN chmod +x /docker-entrypoint-initdb.d/*.sh
-
-COPY custom-entrypoint.sh /custom-entrypoint.sh
-RUN chmod +x /custom-entrypoint.sh
-ENTRYPOINT ["/custom-entrypoint.sh"]
-CMD ["postgres"]
