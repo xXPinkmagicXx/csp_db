@@ -16,6 +16,7 @@ run_experiment_and_log() {
   local index_dates=$4
   local index_text=$5
   local logfile="$RESULTS_DIR/results_${exp_name}.log"
+  local index_csv="$RESULTS_DIR/index_stats_${exp_name}.csv"
 
   echo "[Info] Running experiment: $exp_name"
   echo "=== Experiment: $exp_name ===" > "$logfile"
@@ -36,6 +37,9 @@ run_experiment_and_log() {
   echo "[Info] Running queries($QUERIES) for $exp_name" >> "$logfile"
   ./run_queries.sh >> "$logfile" 2>&1
   echo "" >> "$logfile"
+
+  echo "[Info] Dumping index size stats to $index_csv"
+  docker exec group12-postgres bash -c 'psql -U postgres -h localhost -p "$PGPORT" -d tpch -q -F ',' --no-align --pset pager=off -f ./scripts/get_info.sql' > "$index_csv"
 
   echo "[Info] Finished $exp_name, results saved to $logfile"
   echo ""
