@@ -51,7 +51,11 @@ fi
 # -- Script starts here 
 
 # Build and spin up
-docker-compose up -d --build
+if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+    docker compose up -d --build
+else
+    docker-compose up -d --build
+fi
 
 # Wait until the docker container is up (timeout after 30)
 for i in {1..30}; do
@@ -65,5 +69,7 @@ done
 
 echo "[Info] Running 'docker exec' with scripts/run_all_experiments.sh"
 # Give execute permission for files in scripts
-docker exec -it group12-postgres bash -c "chmod +x scripts/*.sh && scripts/run_all_experiments.sh"
+docker exec -it group12-postgres bash -c "chmod +x scripts/*.sh"
+./run_all_experiments.sh
 # docker-compose run --rm --service-ports group12-postgres bash
+
