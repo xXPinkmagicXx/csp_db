@@ -30,3 +30,5 @@ psql -U postgres -d tpch <<EOF
 EOF
 
 echo "TPC-H data loaded."
+
+touch /var/lib/postgresql/data/.initialized
