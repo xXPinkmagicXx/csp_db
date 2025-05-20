@@ -3,7 +3,7 @@
 set -e
 
 export PGPASSWORD="$POSTGRES_PASSWORD"
-echo "Running init.sh"
+echo "Running init.sh with scale factor: $SCALE index: $INDEX"
 ./usr/local/bin/docker-entrypoint.sh "$@" &
 
 echo "user: $POSTGRES_USER"
@@ -14,17 +14,17 @@ until pg_isready -U "$POSTGRES_USER" -h localhost -p "$PGPORT" -d tpch ; do
    sleep 10
 done
 
-echo "Postgres is ready. Running schema.sql..."
+echo "[Info] Postgres is ready. Running schema.sql..."
 
 # Creating tables if they do not exist
 echo "[Info] Creating tables (if they do not exist)"
-psql -U postgres -h localhost -p 5432 -d tpch -f ./schema.sql
+psql -U postgres -h localhost -p "$PGPORT" -d tpch -f ./schema.sql
 
-# Drop all indexes
-echo "[Info] Dropping all indexes"
-psql -U postgres -h localhost -p 5432 -d tpch -f ./scripts/drop_all_indexes.sql
+
+
+# Drop indexes to setup the database for a new experiment
+scripts/drop_indexes.sh
+
 
 # Add the current indexes that is used for experiment
-echo "[Info] Creating indexes for dates"
-psql -U postgres -h localhost -p 5432 -d tpch -f ./scripts/dates_index.sql
-
+scripts/create_indexes.sh

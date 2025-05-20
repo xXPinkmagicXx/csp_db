@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # docker-compose up --build
-echo "Running 'docker-compose run'"
-
 export $(grep -v '^#' .env | xargs)
+echo "[Info] Running docker-compose up with scale: $SCALE"
+
 docker-compose up -d --build
 
 # Wait until the container is up (timeout after 30)
@@ -16,5 +16,7 @@ for i in {1..30}; do
   sleep 1
 done
 
-docker exec -it group12-postgres bash -c "chmod +x scripts/init.sh && scripts/init.sh"
+echo "[Info] Running 'docker exec'"
+# Give execute permission for files in scripts
+docker exec -it group12-postgres bash -c "chmod +x scripts/*.sh && scripts/init.sh"
 # docker-compose run --rm --service-ports group12-postgres bash
