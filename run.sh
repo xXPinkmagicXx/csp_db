@@ -53,15 +53,13 @@ fi
 # Build and spin up
 docker-compose up -d --build
 
-# Wait until the docker container is up (timeout after 30)
-for i in {1..30}; do
-  if docker exec group12-postgres pg_isready -U postgres > /dev/null 2>&1; then
-    echo "[Info] PostgreSQL is ready!"
-    break
-  fi
-  echo "[Info] Postgres not ready yet "
-  sleep 1
+# Wait until the docker container is up
+while ! docker exec group12-postgres bash -c  'pg_isready -U "$POSTGRES_USER" > /dev/null 2>&1 && [ -f "/var/lib/postgresql/data/.initialized" ]'
+do
+  echo "[Info] Postgres not ready yet"
+  sleep 5
 done
+echo "[Info] PostgreSQL is ready!"
 
 echo "[Info] Running 'docker exec' with scripts/run_all_experiments.sh"
 # Give execute permission for files in scripts
