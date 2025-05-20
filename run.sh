@@ -1,0 +1,69 @@
+#!/bin/bash
+
+# docker-compose up --build
+export $(grep -v '^#' .env | xargs)
+echo "[Info] Running docker-compose up with scale: $SCALE"
+
+# INPUT VALIDATION
+# EXIT if VAR is empty or not 0,1
+if [[ -z "$INDEX_ALL" || $INDEX_ALL != 0 && $INDEX_ALL != 1 ]]; then
+   echo "[Error] INDEX_ALL not correct - expected value: {0,1}"
+   exit
+fi
+if [[ ! "$INDEX_NUMBERS" || $INDEX_NUMBERS != 0 && $INDEX_NUMBERS != 1 ]]; then
+   echo "[Error] INDEX_NUMBERS not correct got '$INDEX_NUMBERS' expected value: {0,1}"
+   exit
+fi
+if [[ -z "$INDEX_DATES" || $INDEX_DATES != 0 && $INDEX_DATES != 1 ]]; then
+   echo "[Error] INDEX_DATES not correct - expected value: {0,1}"
+   exit
+fi
+if [[ -z "$INDEX_TEXT" || $INDEX_TEXT != 0 && $INDEX_TEXT != 1 ]]; then
+   echo "[Error] INDEX_TEXT not correct - expected value: {0,1}"
+   exit
+fi
+
+# IF INDEX_ALL but others are not  
+if [[ $INDEX_ALL = 1 ]]; then
+
+   if [[ $INDEX_DATES != 1 ]]; then
+      echo "[Error] INDEX_ALL=1 but INDEX_DATES=$INDEX_DATES - expected value: 1"
+      exit
+   fi
+   
+   if [[ $INDEX_TEXT != 1 ]]; then
+      echo "[Error] INDEX_ALL=1 but INDEX_TEXT=$INDEX_TEXT - expected value: 1"
+      exit
+
+   fi
+
+   if [[ $INDEX_NUMBERS != 1 ]]; then
+      echo "[Error] INDEX_ALL=1 but INDEX_NUMBERS=$INDEX_NUMBERS - expected value: 1"
+      exit
+   fi
+
+fi
+
+if [[ $INDEX_ALL = 0 && $INDEX_NUMBERS = 0 && $INDEX_DATES = 0 && $INDEX_TEXT = 0 ]]; then
+   echo "[Warning] NO INDEXING - Running the experiments with no indexing"
+fi
+
+# -- Script starts here 
+
+# Build and spin up
+docker-compose up -d --build
+
+# Wait until the docker container is up (timeout after 30)
+for i in {1..30}; do
+  if docker exec group12-postgres pg_isready -U postgres > /dev/null 2>&1; then
+    echo "[Info] PostgreSQL is ready!"
+    break
+  fi
+  echo "[Info] Postgres not ready yet "
+  sleep 1
+done
+
+echo "[Info] Running 'docker exec' with scripts/run_all_experiments.sh"
+# Give execute permission for files in scripts
+docker exec -it group12-postgres bash -c "chmod +x scripts/*.sh && scripts/run_all_experiments.sh"
+# docker-compose run --rm --service-ports group12-postgres bash

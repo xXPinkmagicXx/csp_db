@@ -1,15 +1,15 @@
 -- https://github.com/cmu-db/benchbase/blob/main/src/main/resources/benchmarks/tpch/ddl-postgres.sql
 
-DROP TABLE IF EXISTS nation CASCADE;
-DROP TABLE IF EXISTS region CASCADE;
-DROP TABLE IF EXISTS part CASCADE;
-DROP TABLE IF EXISTS supplier CASCADE;
-DROP TABLE IF EXISTS partsupp CASCADE;
-DROP TABLE IF EXISTS orders CASCADE;
-DROP TABLE IF EXISTS customer CASCADE;
-DROP TABLE IF EXISTS lineitem CASCADE;
+-- DROP TABLE IF EXISTS nation CASCADE;
+-- DROP TABLE IF EXISTS region CASCADE;
+-- DROP TABLE IF EXISTS part CASCADE;
+-- DROP TABLE IF EXISTS supplier CASCADE;
+-- DROP TABLE IF EXISTS partsupp CASCADE;
+-- DROP TABLE IF EXISTS orders CASCADE;
+-- DROP TABLE IF EXISTS customer CASCADE;
+-- DROP TABLE IF EXISTS lineitem CASCADE;
 
-CREATE TABLE region (
+CREATE TABLE IF NOT EXISTS region (
     r_regionkey integer  NOT NULL,
     r_name      char(25) NOT NULL,
     r_comment   varchar(152),
@@ -17,7 +17,7 @@ CREATE TABLE region (
 );
 --CREATE UNIQUE INDEX r_rk ON region (r_regionkey ASC);
 
-CREATE TABLE nation (
+CREATE TABLE IF NOT EXISTS nation (
     n_nationkey integer  NOT NULL,
     n_name      char(25) NOT NULL,
     n_regionkey integer  NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE nation (
 --CREATE UNIQUE INDEX n_nk ON nation (n_nationkey ASC);
 --CREATE INDEX n_rk ON nation (n_regionkey ASC);
 
-CREATE TABLE part (
+CREATE TABLE IF NOT EXISTS part (
     p_partkey     integer        NOT NULL,
     p_name        varchar(55)    NOT NULL,
     p_mfgr        char(25)       NOT NULL,
@@ -42,7 +42,7 @@ CREATE TABLE part (
 );
 --CREATE UNIQUE INDEX p_pk ON part (p_partkey ASC);
 
-CREATE TABLE supplier (
+CREATE TABLE IF NOT EXISTS supplier (
     s_suppkey   integer        NOT NULL,
     s_name      char(25)       NOT NULL,
     s_address   varchar(40)    NOT NULL,
@@ -56,7 +56,7 @@ CREATE TABLE supplier (
 --CREATE UNIQUE INDEX s_sk ON supplier (s_suppkey ASC);
 --CREATE INDEX s_nk ON supplier (s_nationkey ASC);
 
-CREATE TABLE partsupp (
+CREATE TABLE IF NOT EXISTS partsupp (
     ps_partkey    integer        NOT NULL,
     ps_suppkey    integer        NOT NULL,
     ps_availqty   integer        NOT NULL,
@@ -71,7 +71,7 @@ CREATE TABLE partsupp (
 --CREATE UNIQUE INDEX ps_pk_sk ON partsupp (ps_partkey ASC, ps_suppkey ASC);
 --CREATE UNIQUE INDEX ps_sk_pk ON partsupp (ps_suppkey ASC, ps_partkey ASC);
 
-CREATE TABLE customer (
+CREATE TABLE IF NOT EXISTS customer (
     c_custkey    integer        NOT NULL,
     c_name       varchar(25)    NOT NULL,
     c_address    varchar(40)    NOT NULL,
@@ -86,7 +86,7 @@ CREATE TABLE customer (
 --CREATE UNIQUE INDEX c_ck ON customer (c_custkey ASC);
 --CREATE INDEX c_nk ON customer (c_nationkey ASC);
 
-CREATE TABLE orders (
+CREATE TABLE IF NOT EXISTS orders (
     o_orderkey      integer        NOT NULL,
     o_custkey       integer        NOT NULL,
     o_orderstatus   char(1)        NOT NULL,
@@ -103,7 +103,7 @@ CREATE TABLE orders (
 --CREATE INDEX o_ck ON orders (o_custkey ASC);
 --CREATE INDEX o_od ON orders (o_orderdate ASC);
 
-CREATE TABLE lineitem (
+CREATE TABLE IF NOT EXISTS lineitem (
     l_orderkey      integer        NOT NULL,
     l_partkey       integer        NOT NULL,
     l_suppkey       integer        NOT NULL,

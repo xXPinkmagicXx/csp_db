@@ -1,0 +1,7 @@
+-- DROP DATES INDEXES --
+-- orders
+DROP INDEX IF EXISTS o_od;
+--lineitem
+DROP INDEX IF EXISTS l_sd;
+DROP INDEX IF EXISTS l_cd;
+DROP INDEX IF EXISTS l_rd;
