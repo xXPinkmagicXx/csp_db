@@ -17,6 +17,15 @@ Other needed env variables can be seen in the example.env file.
 
 After this a simple docker compose command should do the trick and the database should be accessible.
 
+## Experiments
+
+1. run
+2. docker up + build
+3. run experiment for scale (e.g sf1)
+4. Initialize indexes
+5. Run experiment
+6. repeat 4-6 for all types of indexes and combinations
+
 
 ## Run
 
@@ -91,3 +100,5 @@ For example to run query 4:
 ```
 ./run_query.sh 4
 ```
+
+
