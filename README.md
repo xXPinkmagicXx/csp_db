@@ -26,6 +26,21 @@ After this a simple docker compose command should do the trick and the database 
 5. Run experiment
 6. repeat 4-6 for all types of indexes and combinations
 
+### The flow of scripts 
+1. run_sf1.sh
+2. run.sh
+3. docker-compose up --build
+4. docker exec bash (Get inside container)
+5. scripts/run_all_experiments.sh
+6. docker-entrypoint.sh
+7. pg_isready (wait for docker to be ready)
+8. psql with ./schema.sql
+9. scripts/run_experiment.sh
+10. scripts/drop_indexes.sh (in run_experiment.sh)
+11. scripts/create_indexes.sh (in run_experiment.sh)
+12. scripts/run_queries.sh (in run_experiment.sh)
+13. Repeat 9-12 with all variation of indexing
+
 
 ## Run
 
