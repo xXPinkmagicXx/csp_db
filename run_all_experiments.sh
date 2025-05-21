@@ -35,7 +35,38 @@ run_experiment_and_log() {
   echo "" >> "$logfile"
 
   echo "[Info] Running queries($QUERIES) for $exp_name" >> "$logfile"
-  ./run_queries.sh >> "$logfile" 2>&1
+  IFS=',' read -r -a queries <<< "$QUERIES"
+
+  for query in "${queries[@]}"; do
+    exec_times=()
+    for i in $(seq 1 "$QUERY_REPEAT")
+    do
+      output=$($DBT3_RUN_QUERY_COMMAND --db-name=tpch --dss=$DSS \
+      --dss-query=$DSS_QUERY --scale-factor=$SCALE \
+      --tpchtools=$TPCHTOOLS $query pgsql)
+      if [ "$i" -eq 1 ]; then
+        echo "$output" | head -n -1 >> "$logfile" 2>&1
+      fi
+      exec_time=$(echo "$output" | grep -E "Query [0-9]+ executed in" | sed -E 's/.*Query [0-9]+ executed in ([0-9.]+) second.*/\1/')
+      exec_times+=("$exec_time")    
+    done
+    joined_times=$(IFS=,; echo "${exec_times[*]}")
+    echo "Query $query execution times in seconds: $joined_times" >> "$logfile"
+
+    sum=0
+    count=0
+    for time in "${exec_times[@]}"; do
+      sum=$(echo "$sum + $time" | bc)
+      ((count++))
+    done
+
+    average=$(echo "scale=4; $sum / $count" | bc)
+    average=$(printf "%.4f" "$average")
+    echo "Average execution time: $average seconds" >> "$logfile"
+    echo "" >> "$logfile"
+
+  done
+
   echo "" >> "$logfile"
 
   echo "[Info] Dumping index size stats to $index_csv"
@@ -44,6 +75,7 @@ run_experiment_and_log() {
   echo "[Info] Finished $exp_name, results saved to $logfile"
   echo ""
 }
+
 
 run_experiment_and_log "no_index" 0 0 0 0
 run_experiment_and_log "numbers" 0 1 0 0
