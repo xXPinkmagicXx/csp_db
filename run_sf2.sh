@@ -1,5 +1,5 @@
 #!/bin/bash
 
-export SCALE=sf10
+export SCALE=sf2
 
 ./run.sh
