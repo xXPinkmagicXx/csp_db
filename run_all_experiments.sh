@@ -45,6 +45,7 @@ run_experiment_and_log() {
   echo ""
 }
 
+run_experiment_and_log "no_index" 0 0 0 0
 run_experiment_and_log "numbers" 0 1 0 0
 run_experiment_and_log "dates" 0 0 1 0
 run_experiment_and_log "text" 0 0 0 1
