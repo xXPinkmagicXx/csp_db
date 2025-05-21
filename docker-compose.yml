@@ -29,5 +29,5 @@ services:
        
 volumes:
   group12-pgdata-sf1:
-   group12-pgdata-sf2:
+  group12-pgdata-sf2:
   group12-pgdata-sf5:
