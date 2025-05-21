@@ -6,11 +6,9 @@ OLD_IFS=$IFS
 IFS=','
 
 for query in $QUERIES; do
-    /home/group12/kit/bin/dbt3-run-query --db-name=tpch --dss=/home/group12/pg_db \
-    --dss-query=/home/group12/TPC-H/dbgen/queries/pgsql --scale-factor=$SCALE \
-    --tpchtools=/home/group12/TPC-H  $query pgsql
+    $DBT3_RUN_QUERY_COMMAND --db-name=tpch --dss=$DSS \
+    --dss-query=$DSS_QUERY --scale-factor=$SCALE \
+    --tpchtools=$TPCHTOOLS $query pgsql
 done
 
 IFS=$OLD_IFS
-
-
