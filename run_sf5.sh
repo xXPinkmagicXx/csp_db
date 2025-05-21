@@ -1,5 +1,3 @@
 #!/bin/bash
 
-export SCALE=sf5
-
-./run.sh
+./run.sh sf5

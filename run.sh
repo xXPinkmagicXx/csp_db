@@ -2,7 +2,10 @@
 
 # docker-compose up --build
 export $(grep -v '^#' .env | xargs)
-echo "[Info] Running docker-compose up with scale: $SCALE"
+if [[ -n "$1" ]]; then
+  export SCALE="$1"
+fi
+echo "[Info] Running docker compose up with scale: $SCALE"
 
 # INPUT VALIDATION
 # EXIT if VAR is empty or not 0,1
@@ -52,9 +55,9 @@ fi
 
 # Build and spin up
 if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
-    docker compose up -d --build
+   docker compose up -d --build
 else
-    docker-compose up -d --build
+   docker-compose up -d --build
 fi
 
 # Wait until the docker container is up
