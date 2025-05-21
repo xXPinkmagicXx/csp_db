@@ -15,6 +15,7 @@ run_experiment_and_log() {
   local index_numbers=$3
   local index_dates=$4
   local index_text=$5
+  local index_default=$6
   local logfile="$RESULTS_DIR/results_${exp_name}.log"
   local index_csv="$RESULTS_DIR/index_stats_${exp_name}.csv"
 
@@ -24,12 +25,14 @@ run_experiment_and_log() {
   echo "INDEX_NUMBERS=$index_numbers" >> "$logfile"
   echo "INDEX_DATES=$index_dates" >> "$logfile"
   echo "INDEX_TEXT=$index_text" >> "$logfile"
+  echo "INDEX_DEFAULT=$index_default" >> "$logfile"
   echo "" >> "$logfile"
 
   export INDEX_ALL=$index_all
   export INDEX_NUMBERS=$index_numbers
   export INDEX_DATES=$index_dates
   export INDEX_TEXT=$index_text
+  export INDEX_DEFAULT=$index_default
 
   ./run_experiment.sh >> "$logfile" 2>&1
   echo "" >> "$logfile"
@@ -77,11 +80,12 @@ run_experiment_and_log() {
 }
 
 
-run_experiment_and_log "no_index" 0 0 0 0
-run_experiment_and_log "numbers" 0 1 0 0
-run_experiment_and_log "dates" 0 0 1 0
-run_experiment_and_log "text" 0 0 0 1
-run_experiment_and_log "numbers_dates" 0 1 1 0
-run_experiment_and_log "numbers_text" 0 1 0 1
-run_experiment_and_log "dates_text" 0 0 1 1
-run_experiment_and_log "all" 1 1 1 1
+run_experiment_and_log "no_index" 0 0 0 0 0
+run_experiment_and_log "default_index" 0 0 0 0 1
+run_experiment_and_log "numbers" 0 1 0 0 0
+run_experiment_and_log "dates" 0 0 1 0 0
+run_experiment_and_log "text" 0 0 0 1 0
+run_experiment_and_log "numbers_dates" 0 1 1 0 0
+run_experiment_and_log "numbers_text" 0 1 0 1 0
+run_experiment_and_log "dates_text" 0 0 1 1 0
+run_experiment_and_log "all" 1 1 1 1 0
