@@ -1,0 +1,24 @@
+Table Name,Index Name,Total Size,Total Size of all Indexes,Table Size,Index Size,Estimated table row count
+customer,customer_pkey,70 MB,13 MB,57 MB,6600 kB,300000
+customer,c_acb,70 MB,13 MB,57 MB,6608 kB,300000
+lineitem,l_tax,3372 MB,1614 MB,1758 MB,257 MB,11997996
+lineitem,lineitem_pkey,3372 MB,1614 MB,1758 MB,257 MB,11997996
+lineitem,l_sd,3372 MB,1614 MB,1758 MB,80 MB,11997996
+lineitem,l_cd,3372 MB,1614 MB,1758 MB,80 MB,11997996
+lineitem,l_rd,3372 MB,1614 MB,1758 MB,80 MB,11997996
+lineitem,l_q,3372 MB,1614 MB,1758 MB,257 MB,11997996
+lineitem,l_extp,3372 MB,1614 MB,1758 MB,343 MB,11997996
+lineitem,l_disc,3372 MB,1614 MB,1758 MB,257 MB,11997996
+nation,nation_pkey,24 kB,16 kB,8192 bytes,16 kB,25
+orders,o_tp,583 MB,174 MB,408 MB,89 MB,3000000
+orders,orders_pkey,583 MB,174 MB,408 MB,64 MB,3000000
+orders,o_od,583 MB,174 MB,408 MB,21 MB,3000000
+part,p_s,84 MB,20 MB,64 MB,2752 kB,400000
+part,part_pkey,84 MB,20 MB,64 MB,8792 kB,400000
+part,p_rp,84 MB,20 MB,64 MB,8808 kB,400000
+partsupp,ps_avqt,319 MB,45 MB,274 MB,11 MB,1600000
+partsupp,partsupp_pkey,319 MB,45 MB,274 MB,34 MB,1600000
+region,region_pkey,24 kB,16 kB,8192 bytes,16 kB,5
+supplier,s_actb,4720 kB,912 kB,3776 kB,456 kB,20000
+supplier,supplier_pkey,4720 kB,912 kB,3776 kB,456 kB,20000
+(22 rows)
