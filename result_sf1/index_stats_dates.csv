@@ -1,0 +1,14 @@
+Table Name,Index Name,Total Size,Total Size of all Indexes,Table Size,Index Size,Estimated table row count
+customer,customer_pkey,31 MB,3312 kB,28 MB,3312 kB,150000
+lineitem,lineitem_pkey,1131 MB,251 MB,880 MB,129 MB,6001215
+lineitem,l_rd,1131 MB,251 MB,880 MB,41 MB,6001215
+lineitem,l_cd,1131 MB,251 MB,880 MB,41 MB,6001215
+lineitem,l_sd,1131 MB,251 MB,880 MB,41 MB,6001215
+nation,nation_pkey,24 kB,16 kB,8192 bytes,16 kB,-1
+orders,orders_pkey,247 MB,43 MB,204 MB,32 MB,1500000
+orders,o_od,247 MB,43 MB,204 MB,10 MB,1500000
+part,part_pkey,37 MB,4408 kB,32 MB,4408 kB,200000
+partsupp,partsupp_pkey,155 MB,17 MB,137 MB,17 MB,800000
+region,region_pkey,24 kB,16 kB,8192 bytes,16 kB,-1
+supplier,supplier_pkey,2056 kB,240 kB,1784 kB,240 kB,10000
+(12 rows)
