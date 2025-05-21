@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "[Info] Running experiments with scale factor: $SCALE index: $INDEX"
+echo "[Info] Running experiments with scale factor: $SCALE"
 
 set +e  # continue on error
 
