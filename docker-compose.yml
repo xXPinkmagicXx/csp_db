@@ -17,7 +17,6 @@ services:
       - ./scripts:/scripts
       - ./schema.sql:/schema.sql
       - ./data/${SCALE}/:/data
-      - ./queries/${SCALE}/:/queries
       - group12-pgdata-${SCALE}:/var/lib/postgresql/data
     restart: unless-stopped
     ports:
