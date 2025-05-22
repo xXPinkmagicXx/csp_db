@@ -3,6 +3,7 @@ INDEX_ALL=0
 INDEX_NUMBERS=1
 INDEX_DATES=1
 INDEX_TEXT=0
+INDEX_DEFAULT=0
 
 [Info] Running drop_indexes.sh
 [Info] Keeping date indexes
@@ -30,7 +31,7 @@ select
 from
 	lineitem
 where
-	l_shipdate <= date '1998-12-01' - interval '74 days'
+	l_shipdate <= date '1998-12-01' - interval '109 days'
 group by
 	l_returnflag,
 	l_linestatus
@@ -39,16 +40,16 @@ order by
 	l_linestatus;
                                               QUERY PLAN                                              
 ------------------------------------------------------------------------------------------------------
- Finalize GroupAggregate  (cost=1153205.00..1153206.95 rows=6 width=236)
+ Finalize GroupAggregate  (cost=1148177.14..1148179.10 rows=6 width=236)
    Group Key: l_returnflag, l_linestatus
-   ->  Gather Merge  (cost=1153205.00..1153206.40 rows=12 width=236)
+   ->  Gather Merge  (cost=1148177.14..1148178.54 rows=12 width=236)
          Workers Planned: 2
-         ->  Sort  (cost=1152204.98..1152204.99 rows=6 width=236)
+         ->  Sort  (cost=1147177.12..1147177.14 rows=6 width=236)
                Sort Key: l_returnflag, l_linestatus
-               ->  Partial HashAggregate  (cost=1152204.76..1152204.90 rows=6 width=236)
+               ->  Partial HashAggregate  (cost=1147176.91..1147177.04 rows=6 width=236)
                      Group Key: l_returnflag, l_linestatus
-                     ->  Parallel Seq Scan on lineitem  (cost=0.00..718960.94 rows=12378395 width=25)
-                           Filter: (l_shipdate <= '1998-09-18 00:00:00'::timestamp without time zone)
+                     ->  Parallel Seq Scan on lineitem  (cost=0.00..718960.94 rows=12234742 width=25)
+                           Filter: (l_shipdate <= '1998-08-14 00:00:00'::timestamp without time zone)
  JIT:
    Functions: 9
    Options: Inlining true, Optimization true, Expressions true, Deforming true
@@ -57,7 +58,9 @@ order by
 COMMIT;
 COMMIT
 
-Query 1 executed in 0.195 second(s).
+Query 1 execution times in seconds: 0.193,0.190,0.183,0.186,0.175,0.190,0.189,0.194,0.197,0.194
+Average execution time: 0.1891 seconds
+
 BEGIN;
 BEGIN
 EXPLAIN
@@ -79,8 +82,8 @@ from
 where
 	p_partkey = ps_partkey
 	and s_suppkey = ps_suppkey
-	and p_size = 33
-	and p_type like '%COPPER'
+	and p_size = 5
+	and p_type like '%STEEL'
 	and s_nationkey = n_nationkey
 	and n_regionkey = r_regionkey
 	and r_name = 'AMERICA'
@@ -105,56 +108,56 @@ order by
 	s_name,
 	p_partkey
 LIMIT 100;
-                                                               QUERY PLAN                                                               
-----------------------------------------------------------------------------------------------------------------------------------------
- Limit  (cost=707105.36..707105.37 rows=1 width=270)
-   ->  Sort  (cost=707105.36..707105.37 rows=1 width=270)
+                                                          QUERY PLAN                                                          
+------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=501817.95..501817.95 rows=1 width=270)
+   ->  Sort  (cost=501817.95..501817.95 rows=1 width=270)
          Sort Key: supplier.s_acctbal DESC, nation.n_name, supplier.s_name, part.p_partkey
-         ->  Hash Join  (cost=192169.40..707105.35 rows=1 width=270)
+         ->  Hash Join  (cost=140992.06..501817.94 rows=1 width=270)
                Hash Cond: ((part.p_partkey = partsupp.ps_partkey) AND ((SubPlan 1) = partsupp.ps_supplycost))
-               ->  Bitmap Heap Scan on part  (cost=236.98..21859.57 rows=4228 width=30)
-                     Recheck Cond: (p_size = 33)
-                     Filter: ((p_type)::text ~~ '%COPPER'::text)
-                     ->  Bitmap Index Scan on p_s  (cost=0.00..235.93 rows=21267 width=0)
-                           Index Cond: (p_size = 33)
-               ->  Hash  (cost=152588.41..152588.41 rows=800000 width=250)
-                     ->  Hash Join  (cost=2026.96..152588.41 rows=800000 width=250)
-                           Hash Cond: (partsupp.ps_suppkey = supplier.s_suppkey)
-                           ->  Seq Scan on partsupp  (cost=0.00..127568.00 rows=4000000 width=14)
-                           ->  Hash  (cost=1901.96..1901.96 rows=10000 width=244)
-                                 ->  Hash Join  (cost=2.46..1901.96 rows=10000 width=244)
+               ->  Bitmap Heap Scan on part  (cost=223.09..21641.92 rows=3630 width=30)
+                     Recheck Cond: (p_size = 5)
+                     Filter: ((p_type)::text ~~ '%STEEL'::text)
+                     ->  Bitmap Index Scan on p_s  (cost=0.00..222.18 rows=19967 width=0)
+                           Index Cond: (p_size = 5)
+               ->  Hash  (cost=101424.98..101424.98 rows=800000 width=250)
+                     ->  Nested Loop  (cost=1.99..101424.98 rows=800000 width=250)
+                           ->  Nested Loop  (cost=1.56..2393.12 rows=10000 width=244)
+                                 Join Filter: (nation.n_regionkey = region.r_regionkey)
+                                 ->  Seq Scan on region  (cost=0.00..1.06 rows=1 width=4)
+                                       Filter: (r_name = 'AMERICA'::bpchar)
+                                 ->  Hash Join  (cost=1.56..1767.06 rows=50000 width=248)
                                        Hash Cond: (supplier.s_nationkey = nation.n_nationkey)
                                        ->  Seq Scan on supplier  (cost=0.00..1612.00 rows=50000 width=144)
-                                       ->  Hash  (cost=2.40..2.40 rows=5 width=108)
-                                             ->  Hash Join  (cost=1.07..2.40 rows=5 width=108)
-                                                   Hash Cond: (nation.n_regionkey = region.r_regionkey)
-                                                   ->  Seq Scan on nation  (cost=0.00..1.25 rows=25 width=112)
-                                                   ->  Hash  (cost=1.06..1.06 rows=1 width=4)
-                                                         ->  Seq Scan on region  (cost=0.00..1.06 rows=1 width=4)
-                                                               Filter: (r_name = 'AMERICA'::bpchar)
+                                       ->  Hash  (cost=1.25..1.25 rows=25 width=112)
+                                             ->  Seq Scan on nation  (cost=0.00..1.25 rows=25 width=112)
+                           ->  Index Scan using ps_sk on partsupp  (cost=0.43..9.10 rows=80 width=14)
+                                 Index Cond: (ps_suppkey = supplier.s_suppkey)
                SubPlan 1
-                 ->  Aggregate  (cost=110.18..110.19 rows=1 width=32)
-                       ->  Nested Loop  (cost=0.86..110.17 rows=2 width=6)
-                             Join Filter: (region_1.r_regionkey = nation_1.n_regionkey)
+                 ->  Aggregate  (cost=85.93..85.94 rows=1 width=32)
+                       ->  Nested Loop  (cost=0.86..85.93 rows=2 width=6)
+                             Join Filter: (nation_1.n_regionkey = region_1.r_regionkey)
                              ->  Seq Scan on region region_1  (cost=0.00..1.06 rows=1 width=4)
                                    Filter: (r_name = 'AMERICA'::bpchar)
-                             ->  Nested Loop  (cost=0.86..108.98 rows=10 width=10)
-                                   ->  Nested Loop  (cost=0.72..107.43 rows=10 width=10)
-                                         ->  Index Scan using partsupp_pkey on partsupp partsupp_1  (cost=0.43..24.36 rows=10 width=10)
+                             ->  Nested Loop  (cost=0.86..84.75 rows=9 width=10)
+                                   ->  Nested Loop  (cost=0.72..83.36 rows=9 width=10)
+                                         ->  Index Scan using ps_pk on partsupp partsupp_1  (cost=0.43..8.59 rows=9 width=10)
                                                Index Cond: (ps_partkey = part.p_partkey)
-                                         ->  Index Scan using supplier_pkey on supplier supplier_1  (cost=0.29..8.31 rows=1 width=8)
+                                         ->  Index Scan using s_sk on supplier supplier_1  (cost=0.29..8.31 rows=1 width=8)
                                                Index Cond: (s_suppkey = partsupp_1.ps_suppkey)
-                                   ->  Index Scan using nation_pkey on nation nation_1  (cost=0.14..0.16 rows=1 width=8)
+                                   ->  Index Scan using n_nk on nation nation_1  (cost=0.14..0.16 rows=1 width=8)
                                          Index Cond: (n_nationkey = supplier_1.s_nationkey)
  JIT:
-   Functions: 65
+   Functions: 55
    Options: Inlining true, Optimization true, Expressions true, Deforming true
-(42 rows)
+(40 rows)
 
 COMMIT;
 COMMIT
 
-Query 2 executed in 0.201 second(s).
+Query 2 execution times in seconds: 0.208,0.198,0.202,0.208,0.197,0.207,0.199,0.202,0.199,0.204
+Average execution time: 0.2024 seconds
+
 BEGIN;
 BEGIN
 EXPLAIN
@@ -168,11 +171,11 @@ from
 	orders,
 	lineitem
 where
-	c_mktsegment = 'BUILDING'
+	c_mktsegment = 'MACHINERY'
 	and c_custkey = o_custkey
 	and l_orderkey = o_orderkey
-	and o_orderdate < date '1995-03-11'
-	and l_shipdate > date '1995-03-11'
+	and o_orderdate < date '1995-03-27'
+	and l_shipdate > date '1995-03-27'
 group by
 	l_orderkey,
 	o_orderdate,
@@ -183,29 +186,29 @@ order by
 LIMIT 10;
                                                              QUERY PLAN                                                              
 -------------------------------------------------------------------------------------------------------------------------------------
- Limit  (cost=1334296.60..1334296.63 rows=10 width=44)
-   ->  Sort  (cost=1334296.60..1338233.32 rows=1574686 width=44)
+ Limit  (cost=1331143.24..1331143.27 rows=10 width=44)
+   ->  Sort  (cost=1331143.24..1335047.35 rows=1561644 width=44)
          Sort Key: (sum((lineitem.l_extendedprice * ('1'::numeric - lineitem.l_discount)))) DESC, orders.o_orderdate
-         ->  Finalize GroupAggregate  (cost=1093033.26..1300268.20 rows=1574686 width=44)
+         ->  Finalize GroupAggregate  (cost=1091878.06..1297396.68 rows=1561644 width=44)
                Group Key: lineitem.l_orderkey, orders.o_orderdate, orders.o_shippriority
-               ->  Gather Merge  (cost=1093033.26..1264181.65 rows=1312238 width=44)
+               ->  Gather Merge  (cost=1091878.06..1261609.00 rows=1301370 width=44)
                      Workers Planned: 2
-                     ->  Partial GroupAggregate  (cost=1092033.23..1111716.80 rows=656119 width=44)
+                     ->  Partial GroupAggregate  (cost=1090878.04..1110398.59 rows=650685 width=44)
                            Group Key: lineitem.l_orderkey, orders.o_orderdate, orders.o_shippriority
-                           ->  Sort  (cost=1092033.23..1093673.53 rows=656119 width=24)
+                           ->  Sort  (cost=1090878.04..1092504.75 rows=650685 width=24)
                                  Sort Key: lineitem.l_orderkey, orders.o_orderdate, orders.o_shippriority
-                                 ->  Parallel Hash Join  (cost=201737.43..1015182.83 rows=656119 width=24)
+                                 ->  Parallel Hash Join  (cost=201770.59..1014703.70 rows=650685 width=24)
                                        Hash Cond: (lineitem.l_orderkey = orders.o_orderkey)
-                                       ->  Parallel Seq Scan on lineitem  (cost=0.00..718960.94 rows=6677503 width=16)
-                                             Filter: (l_shipdate > '1995-03-11'::date)
-                                       ->  Parallel Hash  (cost=196399.22..196399.22 rows=307057 width=12)
-                                             ->  Parallel Hash Join  (cost=22694.53..196399.22 rows=307057 width=12)
+                                       ->  Parallel Seq Scan on lineitem  (cost=0.00..718960.94 rows=6641594 width=16)
+                                             Filter: (l_shipdate > '1995-03-27'::date)
+                                       ->  Parallel Hash  (cost=196448.59..196448.59 rows=306160 width=12)
+                                             ->  Parallel Hash Join  (cost=22679.81..196448.59 rows=306160 width=12)
                                                    Hash Cond: (orders.o_custkey = customer.c_custkey)
-                                                   ->  Parallel Seq Scan on orders  (cost=0.00..169710.50 rows=1521589 width=16)
-                                                         Filter: (o_orderdate < '1995-03-11'::date)
-                                                   ->  Parallel Hash  (cost=21906.25..21906.25 rows=63062 width=4)
-                                                         ->  Parallel Seq Scan on customer  (cost=0.00..21906.25 rows=63062 width=4)
-                                                               Filter: (c_mktsegment = 'BUILDING'::bpchar)
+                                                   ->  Parallel Seq Scan on orders  (cost=0.00..169710.50 rows=1546003 width=16)
+                                                         Filter: (o_orderdate < '1995-03-27'::date)
+                                                   ->  Parallel Hash  (cost=21906.25..21906.25 rows=61885 width=4)
+                                                         ->  Parallel Seq Scan on customer  (cost=0.00..21906.25 rows=61885 width=4)
+                                                               Filter: (c_mktsegment = 'MACHINERY'::bpchar)
  JIT:
    Functions: 33
    Options: Inlining true, Optimization true, Expressions true, Deforming true
@@ -214,7 +217,9 @@ LIMIT 10;
 COMMIT;
 COMMIT
 
-Query 3 executed in 0.200 second(s).
+Query 3 execution times in seconds: 0.199,0.198,0.198,0.179,0.194,0.195,0.199,0.180,0.198,0.199
+Average execution time: 0.1939 seconds
+
 BEGIN;
 BEGIN
 EXPLAIN
@@ -224,8 +229,8 @@ select
 from
 	orders
 where
-	o_orderdate >= date '1994-07-01'
-	and o_orderdate < cast(date '1994-07-01' + interval '3 month' as date)
+	o_orderdate >= date '1997-06-01'
+	and o_orderdate < cast(date '1997-06-01' + interval '3 month' as date)
 	and exists (
 		select
 			*
@@ -241,20 +246,20 @@ order by
 	o_orderpriority;
                                                            QUERY PLAN                                                           
 --------------------------------------------------------------------------------------------------------------------------------
- Finalize GroupAggregate  (cost=473781.38..473832.09 rows=5 width=24)
+ Finalize GroupAggregate  (cost=265198.93..265248.91 rows=5 width=24)
    Group Key: orders.o_orderpriority
-   ->  Gather Merge  (cost=473781.38..473831.99 rows=10 width=24)
+   ->  Gather Merge  (cost=265198.93..265248.81 rows=10 width=24)
          Workers Planned: 2
-         ->  Partial GroupAggregate  (cost=472781.36..472830.81 rows=5 width=24)
+         ->  Partial GroupAggregate  (cost=264198.91..264247.64 rows=5 width=24)
                Group Key: orders.o_orderpriority
-               ->  Sort  (cost=472781.36..472797.83 rows=6587 width=16)
+               ->  Sort  (cost=264198.91..264215.14 rows=6490 width=16)
                      Sort Key: orders.o_orderpriority
-                     ->  Nested Loop Semi Join  (cost=3904.01..472363.57 rows=6587 width=16)
-                           ->  Parallel Bitmap Heap Scan on orders  (cost=3903.57..170116.22 rows=118664 width=20)
-                                 Recheck Cond: ((o_orderdate >= '1994-07-01'::date) AND (o_orderdate < '1994-10-01'::date))
-                                 ->  Bitmap Index Scan on o_od  (cost=0.00..3832.37 rows=284794 width=0)
-                                       Index Cond: ((o_orderdate >= '1994-07-01'::date) AND (o_orderdate < '1994-10-01'::date))
-                           ->  Index Scan using lineitem_pkey on lineitem  (cost=0.44..48.59 rows=24 width=4)
+                     ->  Nested Loop Semi Join  (cost=3868.13..263787.96 rows=6490 width=16)
+                           ->  Parallel Bitmap Heap Scan on orders  (cost=3867.69..170076.08 rows=117531 width=20)
+                                 Recheck Cond: ((o_orderdate >= '1997-06-01'::date) AND (o_orderdate < '1997-09-01'::date))
+                                 ->  Bitmap Index Scan on o_od  (cost=0.00..3797.17 rows=282074 width=0)
+                                       Index Cond: ((o_orderdate >= '1997-06-01'::date) AND (o_orderdate < '1997-09-01'::date))
+                           ->  Index Scan using l_ok on lineitem  (cost=0.44..8.64 rows=24 width=4)
                                  Index Cond: (l_orderkey = orders.o_orderkey)
                                  Filter: (l_commitdate < l_receiptdate)
  JIT:
@@ -265,7 +270,9 @@ order by
 COMMIT;
 COMMIT
 
-Query 4 executed in 0.191 second(s).
+Query 4 execution times in seconds: 0.193,0.195,0.189,0.192,0.184,0.188,0.176,0.190,0.176,0.177
+Average execution time: 0.1860 seconds
+
 BEGIN;
 BEGIN
 EXPLAIN
@@ -286,57 +293,58 @@ where
 	and c_nationkey = s_nationkey
 	and s_nationkey = n_nationkey
 	and n_regionkey = r_regionkey
-	and r_name = 'EUROPE'
-	and o_orderdate >= date '1994-01-01'
-	and o_orderdate < date '1994-01-01' + interval '1 year'
+	and r_name = 'AFRICA'
+	and o_orderdate >= date '1997-01-01'
+	and o_orderdate < date '1997-01-01' + interval '1 year'
 group by
 	n_name
 order by
 	revenue desc;
                                                                                QUERY PLAN                                                                               
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Sort  (cost=1084266.01..1084266.07 rows=25 width=136)
+ Sort  (cost=880287.81..880287.87 rows=25 width=136)
    Sort Key: (sum((lineitem.l_extendedprice * ('1'::numeric - lineitem.l_discount)))) DESC
-   ->  Finalize GroupAggregate  (cost=1084067.19..1084265.43 rows=25 width=136)
+   ->  Finalize GroupAggregate  (cost=880087.97..880287.23 rows=25 width=136)
          Group Key: nation.n_name
-         ->  Gather Merge  (cost=1084067.19..1084264.74 rows=50 width=136)
+         ->  Gather Merge  (cost=880087.97..880286.54 rows=50 width=136)
                Workers Planned: 2
-               ->  Partial GroupAggregate  (cost=1083067.17..1083258.95 rows=25 width=136)
+               ->  Partial GroupAggregate  (cost=879087.95..879280.75 rows=25 width=136)
                      Group Key: nation.n_name
-                     ->  Sort  (cost=1083067.17..1083105.46 rows=15317 width=116)
+                     ->  Sort  (cost=879087.95..879126.45 rows=15399 width=116)
                            Sort Key: nation.n_name
-                           ->  Parallel Hash Join  (cost=214061.65..1082002.42 rows=15317 width=116)
-                                 Hash Cond: ((orders.o_custkey = customer.c_custkey) AND (supplier.s_nationkey = customer.c_nationkey))
-                                 ->  Parallel Hash Join  (cost=187028.15..1037525.33 rows=382969 width=128)
-                                       Hash Cond: (lineitem.l_orderkey = orders.o_orderkey)
-                                       ->  Parallel Hash Join  (cost=1651.22..750941.95 rows=2499983 width=128)
-                                             Hash Cond: (lineitem.l_suppkey = supplier.s_suppkey)
-                                             ->  Parallel Seq Scan on lineitem  (cost=0.00..687711.15 rows=12499915 width=20)
-                                             ->  Parallel Hash  (cost=1577.70..1577.70 rows=5882 width=116)
-                                                   ->  Hash Join  (cost=2.46..1577.70 rows=5882 width=116)
-                                                         Hash Cond: (supplier.s_nationkey = nation.n_nationkey)
-                                                         ->  Parallel Seq Scan on supplier  (cost=0.00..1406.12 rows=29412 width=8)
+                           ->  Parallel Hash Join  (cost=26652.32..878016.91 rows=15399 width=116)
+                                 Hash Cond: ((lineitem.l_suppkey = supplier.s_suppkey) AND (customer.c_nationkey = supplier.s_nationkey))
+                                 ->  Nested Loop  (cost=24805.03..874148.45 rows=384983 width=128)
+                                       ->  Parallel Hash Join  (cost=24804.59..209392.24 rows=96246 width=116)
+                                             Hash Cond: (orders.o_custkey = customer.c_custkey)
+                                             ->  Parallel Seq Scan on orders  (cost=0.00..177523.00 rows=481232 width=8)
+                                                   Filter: ((o_orderdate >= '1997-01-01'::date) AND (o_orderdate < '1998-01-01 00:00:00'::timestamp without time zone))
+                                             ->  Parallel Hash  (cost=22924.34..22924.34 rows=62500 width=116)
+                                                   ->  Hash Join  (cost=2.46..22924.34 rows=62500 width=116)
+                                                         Hash Cond: (customer.c_nationkey = nation.n_nationkey)
+                                                         ->  Parallel Seq Scan on customer  (cost=0.00..21125.00 rows=312500 width=8)
                                                          ->  Hash  (cost=2.40..2.40 rows=5 width=108)
                                                                ->  Hash Join  (cost=1.07..2.40 rows=5 width=108)
                                                                      Hash Cond: (nation.n_regionkey = region.r_regionkey)
                                                                      ->  Seq Scan on nation  (cost=0.00..1.25 rows=25 width=112)
                                                                      ->  Hash  (cost=1.06..1.06 rows=1 width=4)
                                                                            ->  Seq Scan on region  (cost=0.00..1.06 rows=1 width=4)
-                                                                                 Filter: (r_name = 'EUROPE'::bpchar)
-                                       ->  Parallel Hash  (cost=177523.00..177523.00 rows=478714 width=8)
-                                             ->  Parallel Seq Scan on orders  (cost=0.00..177523.00 rows=478714 width=8)
-                                                   Filter: ((o_orderdate >= '1994-01-01'::date) AND (o_orderdate < '1995-01-01 00:00:00'::timestamp without time zone))
-                                 ->  Parallel Hash  (cost=21125.00..21125.00 rows=312500 width=8)
-                                       ->  Parallel Seq Scan on customer  (cost=0.00..21125.00 rows=312500 width=8)
+                                                                                 Filter: (r_name = 'AFRICA'::bpchar)
+                                       ->  Index Scan using l_ok on lineitem  (cost=0.44..6.19 rows=72 width=20)
+                                             Index Cond: (l_orderkey = orders.o_orderkey)
+                                 ->  Parallel Hash  (cost=1406.12..1406.12 rows=29412 width=8)
+                                       ->  Parallel Seq Scan on supplier  (cost=0.00..1406.12 rows=29412 width=8)
  JIT:
-   Functions: 57
+   Functions: 52
    Options: Inlining true, Optimization true, Expressions true, Deforming true
-(36 rows)
+(35 rows)
 
 COMMIT;
 COMMIT
 
-Query 5 executed in 0.200 second(s).
+Query 5 execution times in seconds: 0.203,0.207,0.205,0.203,0.204,0.205,0.203,0.186,0.185,0.208
+Average execution time: 0.2009 seconds
+
 BEGIN;
 BEGIN
 EXPLAIN
@@ -345,18 +353,18 @@ select
 from
 	lineitem
 where
-	l_shipdate >= date '1994-01-01'
-	and l_shipdate < cast(date '1994-01-01' + interval '1 year' as date)
-	and l_discount between 0.08 - 0.01 and 0.08 + 0.01
-	and l_quantity < 24;
+	l_shipdate >= date '1997-01-01'
+	and l_shipdate < cast(date '1997-01-01' + interval '1 year' as date)
+	and l_discount between 0.04 - 0.01 and 0.04 + 0.01
+	and l_quantity < 25;
                                                                                         QUERY PLAN                                                                                         
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Finalize Aggregate  (cost=846150.13..846150.14 rows=1 width=32)
-   ->  Gather  (cost=846149.91..846150.12 rows=2 width=32)
+ Finalize Aggregate  (cost=846211.51..846211.52 rows=1 width=32)
+   ->  Gather  (cost=846211.28..846211.49 rows=2 width=32)
          Workers Planned: 2
-         ->  Partial Aggregate  (cost=845149.91..845149.92 rows=1 width=32)
-               ->  Parallel Seq Scan on lineitem  (cost=0.00..843960.09 rows=237964 width=12)
-                     Filter: ((l_shipdate >= '1994-01-01'::date) AND (l_shipdate < '1995-01-01'::date) AND (l_discount >= 0.07) AND (l_discount <= 0.09) AND (l_quantity < '24'::numeric))
+         ->  Partial Aggregate  (cost=845211.28..845211.29 rows=1 width=32)
+               ->  Parallel Seq Scan on lineitem  (cost=0.00..843960.09 rows=250239 width=12)
+                     Filter: ((l_shipdate >= '1997-01-01'::date) AND (l_shipdate < '1998-01-01'::date) AND (l_discount >= 0.03) AND (l_discount <= 0.05) AND (l_quantity < '25'::numeric))
  JIT:
    Functions: 7
    Options: Inlining true, Optimization true, Expressions true, Deforming true
@@ -365,7 +373,9 @@ where
 COMMIT;
 COMMIT
 
-Query 6 executed in 0.180 second(s).
+Query 6 execution times in seconds: 0.186,0.193,0.184,0.189,0.190,0.189,0.174,0.190,0.193,0.191
+Average execution time: 0.1879 seconds
+
 BEGIN;
 BEGIN
 EXPLAIN
@@ -395,8 +405,8 @@ from
 			and s_nationkey = n1.n_nationkey
 			and c_nationkey = n2.n_nationkey
 			and (
-				(n1.n_name = 'SAUDI ARABIA' and n2.n_name = 'IRAQ')
-				or (n1.n_name = 'IRAQ' and n2.n_name = 'SAUDI ARABIA')
+				(n1.n_name = 'MOZAMBIQUE' and n2.n_name = 'CANADA')
+				or (n1.n_name = 'CANADA' and n2.n_name = 'MOZAMBIQUE')
 			)
 			and l_shipdate between date '1995-01-01' and date '1996-12-31'
 	) as shipping
@@ -410,20 +420,20 @@ order by
 	l_year;
                                                                                          QUERY PLAN                                                                                          
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Finalize GroupAggregate  (cost=990547.71..993638.46 rows=10044 width=272)
+ Finalize GroupAggregate  (cost=990434.84..993522.45 rows=10036 width=272)
    Group Key: n1.n_name, n2.n_name, (EXTRACT(year FROM lineitem.l_shipdate))
-   ->  Gather Merge  (cost=990547.71..993236.70 rows=20088 width=272)
+   ->  Gather Merge  (cost=990434.84..993121.01 rows=20072 width=272)
          Workers Planned: 2
-         ->  Partial GroupAggregate  (cost=989547.69..989918.03 rows=10044 width=272)
+         ->  Partial GroupAggregate  (cost=989434.82..989804.18 rows=10036 width=272)
                Group Key: n1.n_name, n2.n_name, (EXTRACT(year FROM lineitem.l_shipdate))
-               ->  Sort  (cost=989547.69..989579.07 rows=12553 width=252)
+               ->  Sort  (cost=989434.82..989466.08 rows=12504 width=252)
                      Sort Key: n1.n_name, n2.n_name, (EXTRACT(year FROM lineitem.l_shipdate))
-                     ->  Parallel Hash Join  (cost=205859.91..988693.10 rows=12553 width=252)
+                     ->  Parallel Hash Join  (cost=205859.91..988583.92 rows=12504 width=252)
                            Hash Cond: (lineitem.l_orderkey = orders.o_orderkey)
-                           Join Filter: (((n1.n_name = 'SAUDI ARABIA'::bpchar) AND (n2.n_name = 'IRAQ'::bpchar)) OR ((n1.n_name = 'IRAQ'::bpchar) AND (n2.n_name = 'SAUDI ARABIA'::bpchar)))
-                           ->  Parallel Hash Join  (cost=1527.22..767651.76 rows=301641 width=124)
+                           Join Filter: (((n1.n_name = 'MOZAMBIQUE'::bpchar) AND (n2.n_name = 'CANADA'::bpchar)) OR ((n1.n_name = 'CANADA'::bpchar) AND (n2.n_name = 'MOZAMBIQUE'::bpchar)))
+                           ->  Parallel Hash Join  (cost=1527.22..767589.89 rows=300468 width=124)
                                  Hash Cond: (lineitem.l_suppkey = supplier.s_suppkey)
-                                 ->  Parallel Seq Scan on lineitem  (cost=0.00..750210.72 rows=3770512 width=24)
+                                 ->  Parallel Seq Scan on lineitem  (cost=0.00..750210.72 rows=3755851 width=24)
                                        Filter: ((l_shipdate >= '1995-01-01'::date) AND (l_shipdate <= '1996-12-31'::date))
                                  ->  Parallel Hash  (cost=1497.81..1497.81 rows=2353 width=108)
                                        ->  Hash Join  (cost=1.40..1497.81 rows=2353 width=108)
@@ -431,7 +441,7 @@ order by
                                              ->  Parallel Seq Scan on supplier  (cost=0.00..1406.12 rows=29412 width=8)
                                              ->  Hash  (cost=1.38..1.38 rows=2 width=108)
                                                    ->  Seq Scan on nation n1  (cost=0.00..1.38 rows=2 width=108)
-                                                         Filter: ((n_name = 'SAUDI ARABIA'::bpchar) OR (n_name = 'IRAQ'::bpchar))
+                                                         Filter: ((n_name = 'MOZAMBIQUE'::bpchar) OR (n_name = 'CANADA'::bpchar))
                            ->  Parallel Hash  (cost=197056.70..197056.70 rows=250000 width=108)
                                  ->  Parallel Hash Join  (cost=22398.28..197056.70 rows=250000 width=108)
                                        Hash Cond: (orders.o_custkey = customer.c_custkey)
@@ -442,7 +452,7 @@ order by
                                                    ->  Parallel Seq Scan on customer  (cost=0.00..21125.00 rows=312500 width=8)
                                                    ->  Hash  (cost=1.38..1.38 rows=2 width=108)
                                                          ->  Seq Scan on nation n2  (cost=0.00..1.38 rows=2 width=108)
-                                                               Filter: ((n_name = 'IRAQ'::bpchar) OR (n_name = 'SAUDI ARABIA'::bpchar))
+                                                               Filter: ((n_name = 'CANADA'::bpchar) OR (n_name = 'MOZAMBIQUE'::bpchar))
  JIT:
    Functions: 62
    Options: Inlining true, Optimization true, Expressions true, Deforming true
@@ -451,14 +461,16 @@ order by
 COMMIT;
 COMMIT
 
-Query 7 executed in 0.205 second(s).
+Query 7 execution times in seconds: 0.191,0.206,0.204,0.185,0.206,0.204,0.207,0.203,0.189,0.209
+Average execution time: 0.2004 seconds
+
 BEGIN;
 BEGIN
 EXPLAIN
 select
 	o_year,
 	sum(case
-		when nation = 'IRAQ' then volume
+		when nation = 'EGYPT' then volume
 		else 0
 	end) / sum(volume) as mkt_share
 from
@@ -486,45 +498,44 @@ from
 			and r_name = 'MIDDLE EAST'
 			and s_nationkey = n2.n_nationkey
 			and o_orderdate between date '1995-01-01' and date '1996-12-31'
-			and p_type = 'PROMO BURNISHED STEEL'
+			and p_type = 'LARGE PLATED TIN'
 	) as all_nations
 group by
 	o_year
 order by
 	o_year;
-                                                                         QUERY PLAN                                                                         
-------------------------------------------------------------------------------------------------------------------------------------------------------------
- Finalize GroupAggregate  (cost=954439.79..954989.93 rows=2406 width=64)
+                                                                        QUERY PLAN                                                                         
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+ Finalize GroupAggregate  (cost=530262.39..530809.43 rows=2406 width=64)
    Group Key: (EXTRACT(year FROM orders.o_orderdate))
-   ->  Gather Merge  (cost=954439.79..954911.73 rows=2406 width=96)
+   ->  Gather Merge  (cost=530262.39..530731.23 rows=2406 width=96)
          Workers Planned: 1
-         ->  Partial GroupAggregate  (cost=953439.78..953641.05 rows=2406 width=96)
+         ->  Partial GroupAggregate  (cost=529262.38..529460.55 rows=2406 width=96)
                Group Key: (EXTRACT(year FROM orders.o_orderdate))
-               ->  Sort  (cost=953439.78..953457.46 rows=7074 width=148)
+               ->  Sort  (cost=529262.38..529279.72 rows=6936 width=148)
                      Sort Key: (EXTRACT(year FROM orders.o_orderdate))
-                     ->  Hash Join  (cost=951402.16..952987.45 rows=7074 width=148)
+                     ->  Hash Join  (cost=527235.93..528819.87 rows=6936 width=148)
                            Hash Cond: (supplier.s_nationkey = n2.n_nationkey)
-                           ->  Parallel Hash Join  (cost=951400.60..952946.49 rows=7074 width=20)
+                           ->  Parallel Hash Join  (cost=527234.36..528779.68 rows=6936 width=20)
                                  Hash Cond: (supplier.s_suppkey = lineitem.l_suppkey)
                                  ->  Parallel Seq Scan on supplier  (cost=0.00..1406.12 rows=29412 width=8)
-                                 ->  Parallel Hash  (cost=951337.96..951337.96 rows=5011 width=20)
-                                       ->  Hash Join  (cost=928792.63..951337.96 rows=5011 width=20)
+                                 ->  Parallel Hash  (cost=527172.95..527172.95 rows=4913 width=20)
+                                       ->  Hash Join  (cost=504632.48..527172.95 rows=4913 width=20)
                                              Hash Cond: (customer.c_nationkey = n1.n_nationkey)
-                                             ->  Parallel Hash Join  (cost=928790.17..951191.43 rows=25054 width=24)
+                                             ->  Parallel Hash Join  (cost=504630.02..527029.24 rows=24564 width=24)
                                                    Hash Cond: (customer.c_custkey = orders.o_custkey)
                                                    ->  Parallel Seq Scan on customer  (cost=0.00..21125.00 rows=312500 width=8)
-                                                   ->  Parallel Hash  (cost=928476.99..928476.99 rows=25054 width=24)
-                                                         ->  Parallel Hash Join  (cost=747317.59..928476.99 rows=25054 width=24)
+                                                   ->  Parallel Hash  (cost=504322.97..504322.97 rows=24564 width=24)
+                                                         ->  Parallel Hash Join  (cost=323231.66..504322.97 rows=24564 width=24)
                                                                Hash Cond: (orders.o_orderkey = lineitem.l_orderkey)
-                                                               ->  Parallel Seq Scan on orders  (cost=0.00..177523.00 rows=941869 width=12)
+                                                               ->  Parallel Seq Scan on orders  (cost=0.00..177523.00 rows=924256 width=12)
                                                                      Filter: ((o_orderdate >= '1995-01-01'::date) AND (o_orderdate <= '1996-12-31'::date))
-                                                               ->  Parallel Hash  (cost=746278.53..746278.53 rows=83125 width=20)
-                                                                     ->  Parallel Hash Join  (cost=25754.97..746278.53 rows=83125 width=20)
-                                                                           Hash Cond: (lineitem.l_partkey = part.p_partkey)
-                                                                           ->  Parallel Seq Scan on lineitem  (cost=0.00..687711.15 rows=12499915 width=24)
-                                                                           ->  Parallel Hash  (cost=25720.33..25720.33 rows=2771 width=4)
-                                                                                 ->  Parallel Seq Scan on part  (cost=0.00..25720.33 rows=2771 width=4)
-                                                                                       Filter: ((p_type)::text = 'PROMO BURNISHED STEEL'::text)
+                                                               ->  Parallel Hash  (cost=322193.48..322193.48 rows=83054 width=20)
+                                                                     ->  Nested Loop  (cost=0.44..322193.48 rows=83054 width=20)
+                                                                           ->  Parallel Seq Scan on part  (cost=0.00..25720.33 rows=2778 width=4)
+                                                                                 Filter: ((p_type)::text = 'LARGE PLATED TIN'::text)
+                                                                           ->  Index Scan using l_pk on lineitem  (cost=0.44..106.42 rows=30 width=24)
+                                                                                 Index Cond: (l_partkey = part.p_partkey)
                                              ->  Hash  (cost=2.40..2.40 rows=5 width=4)
                                                    ->  Hash Join  (cost=1.07..2.40 rows=5 width=4)
                                                          Hash Cond: (n1.n_regionkey = region.r_regionkey)
@@ -535,14 +546,16 @@ order by
                            ->  Hash  (cost=1.25..1.25 rows=25 width=108)
                                  ->  Seq Scan on nation n2  (cost=0.00..1.25 rows=25 width=108)
  JIT:
-   Functions: 74
+   Functions: 68
    Options: Inlining true, Optimization true, Expressions true, Deforming true
-(43 rows)
+(42 rows)
 
 COMMIT;
 COMMIT
 
-Query 8 executed in 0.200 second(s).
+Query 8 execution times in seconds: 0.209,0.195,0.188,0.180,0.208,0.208,0.193,0.193,0.205,0.199
+Average execution time: 0.1978 seconds
+
 BEGIN;
 BEGIN
 EXPLAIN
@@ -570,7 +583,7 @@ from
 			and p_partkey = l_partkey
 			and o_orderkey = l_orderkey
 			and s_nationkey = n_nationkey
-			and p_name like '%spring%'
+			and p_name like '%lace%'
 	) as profit
 group by
 	nation,
@@ -578,47 +591,49 @@ group by
 order by
 	nation,
 	o_year desc;
-                                                                        QUERY PLAN                                                                        
-----------------------------------------------------------------------------------------------------------------------------------------------------------
- Finalize GroupAggregate  (cost=1413803.24..1450898.20 rows=60150 width=168)
+                                                               QUERY PLAN                                                                
+-----------------------------------------------------------------------------------------------------------------------------------------
+ Finalize GroupAggregate  (cost=828455.91..857932.26 rows=60150 width=168)
    Group Key: nation.n_name, (EXTRACT(year FROM orders.o_orderdate))
-   ->  Gather Merge  (cost=1413803.24..1448792.95 rows=120300 width=168)
+   ->  Gather Merge  (cost=828455.91..855827.01 rows=120300 width=168)
          Workers Planned: 2
-         ->  Partial GroupAggregate  (cost=1412803.21..1433907.32 rows=60150 width=168)
+         ->  Partial GroupAggregate  (cost=827455.89..840941.38 rows=60150 width=168)
                Group Key: nation.n_name, (EXTRACT(year FROM orders.o_orderdate))
-               ->  Sort  (cost=1412803.21..1415328.45 rows=1010093 width=159)
+               ->  Sort  (cost=827455.89..829028.79 rows=629162 width=159)
                      Sort Key: nation.n_name, (EXTRACT(year FROM orders.o_orderdate)) DESC
-                     ->  Hash Join  (cost=934571.41..1153250.35 rows=1010093 width=159)
+                     ->  Hash Join  (cost=455567.99..667933.92 rows=629162 width=159)
                            Hash Cond: (supplier.s_nationkey = nation.n_nationkey)
-                           ->  Parallel Hash Join  (cost=934569.85..1147622.57 rows=1010093 width=31)
+                           ->  Parallel Hash Join  (cost=455566.42..664427.93 rows=629162 width=31)
                                  Hash Cond: (orders.o_orderkey = lineitem.l_orderkey)
                                  ->  Parallel Seq Scan on orders  (cost=0.00..161898.00 rows=3125000 width=8)
-                                 ->  Parallel Hash  (cost=915038.69..915038.69 rows=1010093 width=31)
-                                       ->  Parallel Hash Join  (cost=771481.93..915038.69 rows=1010093 width=31)
-                                             Hash Cond: (lineitem.l_suppkey = supplier.s_suppkey)
-                                             ->  Parallel Hash Join  (cost=769708.16..910613.20 rows=1010093 width=35)
-                                                   Hash Cond: ((partsupp.ps_suppkey = lineitem.l_suppkey) AND (partsupp.ps_partkey = lineitem.l_partkey))
-                                                   ->  Parallel Seq Scan on partsupp  (cost=0.00..104234.67 rows=1666667 width=14)
-                                                   ->  Parallel Hash  (cost=746664.77..746664.77 rows=1010093 width=33)
-                                                         ->  Parallel Hash Join  (cost=26141.21..746664.77 rows=1010093 width=33)
-                                                               Hash Cond: (lineitem.l_partkey = part.p_partkey)
-                                                               ->  Parallel Seq Scan on lineitem  (cost=0.00..687711.15 rows=12499915 width=29)
-                                                               ->  Parallel Hash  (cost=25720.33..25720.33 rows=33670 width=4)
-                                                                     ->  Parallel Seq Scan on part  (cost=0.00..25720.33 rows=33670 width=4)
-                                                                           Filter: ((p_name)::text ~~ '%spring%'::text)
-                                             ->  Parallel Hash  (cost=1406.12..1406.12 rows=29412 width=8)
-                                                   ->  Parallel Seq Scan on supplier  (cost=0.00..1406.12 rows=29412 width=8)
+                                 ->  Parallel Hash  (cost=443400.90..443400.90 rows=629162 width=31)
+                                       ->  Nested Loop  (cost=27757.59..443400.90 rows=629162 width=31)
+                                             Join Filter: (supplier.s_suppkey = lineitem.l_suppkey)
+                                             ->  Parallel Hash Join  (cost=27757.15..136587.82 rows=84175 width=26)
+                                                   Hash Cond: (partsupp.ps_suppkey = supplier.s_suppkey)
+                                                   ->  Parallel Hash Join  (cost=25983.38..134593.07 rows=84175 width=18)
+                                                         Hash Cond: (partsupp.ps_partkey = part.p_partkey)
+                                                         ->  Parallel Seq Scan on partsupp  (cost=0.00..104234.67 rows=1666667 width=14)
+                                                         ->  Parallel Hash  (cost=25720.33..25720.33 rows=21044 width=4)
+                                                               ->  Parallel Seq Scan on part  (cost=0.00..25720.33 rows=21044 width=4)
+                                                                     Filter: ((p_name)::text ~~ '%lace%'::text)
+                                                   ->  Parallel Hash  (cost=1406.12..1406.12 rows=29412 width=8)
+                                                         ->  Parallel Seq Scan on supplier  (cost=0.00..1406.12 rows=29412 width=8)
+                                             ->  Index Scan using l_pk_sk on lineitem  (cost=0.44..3.63 rows=1 width=29)
+                                                   Index Cond: ((l_partkey = partsupp.ps_partkey) AND (l_suppkey = partsupp.ps_suppkey))
                            ->  Hash  (cost=1.25..1.25 rows=25 width=108)
                                  ->  Seq Scan on nation  (cost=0.00..1.25 rows=25 width=108)
  JIT:
-   Functions: 55
+   Functions: 51
    Options: Inlining true, Optimization true, Expressions true, Deforming true
 (33 rows)
 
 COMMIT;
 COMMIT
 
-Query 9 executed in 0.206 second(s).
+Query 9 execution times in seconds: 0.194,0.208,0.210,0.199,0.206,0.212,0.209,0.215,0.207,0.214
+Average execution time: 0.2074 seconds
+
 BEGIN;
 BEGIN
 EXPLAIN
@@ -639,8 +654,8 @@ from
 where
 	c_custkey = o_custkey
 	and l_orderkey = o_orderkey
-	and o_orderdate >= date '1993-12-01'
-	and o_orderdate < cast(date '1993-12-01' + interval '3 month' as date)
+	and o_orderdate >= date '1994-05-01'
+	and o_orderdate < cast(date '1994-05-01' + interval '3 month' as date)
 	and l_returnflag = 'R'
 	and c_nationkey = n_nationkey
 group by
@@ -656,32 +671,32 @@ order by
 LIMIT 20;
                                                                              QUERY PLAN                                                                             
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Limit  (cost=996024.24..996024.29 rows=20 width=280)
-   ->  Sort  (cost=996024.24..996740.70 rows=286585 width=280)
+ Limit  (cost=996967.23..996967.28 rows=20 width=279)
+   ->  Sort  (cost=996967.23..997692.56 rows=290132 width=279)
          Sort Key: (sum((lineitem.l_extendedprice * ('1'::numeric - lineitem.l_discount)))) DESC
-         ->  Finalize GroupAggregate  (cost=951578.27..988398.31 rows=286585 width=280)
+         ->  Finalize GroupAggregate  (cost=951971.14..989246.92 rows=290132 width=279)
                Group Key: customer.c_custkey, nation.n_name
-               ->  Gather Merge  (cost=951578.27..982427.80 rows=238820 width=280)
+               ->  Gather Merge  (cost=951971.14..983202.51 rows=241776 width=279)
                      Workers Planned: 2
-                     ->  Partial GroupAggregate  (cost=950578.25..953862.02 rows=119410 width=280)
+                     ->  Partial GroupAggregate  (cost=950971.12..954295.54 rows=120888 width=279)
                            Group Key: customer.c_custkey, nation.n_name
-                           ->  Sort  (cost=950578.25..950876.77 rows=119410 width=260)
+                           ->  Sort  (cost=950971.12..951273.34 rows=120888 width=259)
                                  Sort Key: customer.c_custkey, nation.n_name
-                                 ->  Hash Join  (cost=900307.41..925812.16 rows=119410 width=260)
+                                 ->  Hash Join  (cost=900375.71..925891.17 rows=120888 width=259)
                                        Hash Cond: (customer.c_nationkey = nation.n_nationkey)
-                                       ->  Parallel Hash Join  (cost=900305.85..925444.02 rows=119410 width=160)
+                                       ->  Parallel Hash Join  (cost=900374.15..925518.47 rows=120888 width=159)
                                              Hash Cond: (customer.c_custkey = orders.o_custkey)
-                                             ->  Parallel Seq Scan on customer  (cost=0.00..21125.00 rows=312500 width=148)
-                                             ->  Parallel Hash  (cost=898813.23..898813.23 rows=119410 width=16)
-                                                   ->  Parallel Hash Join  (cost=171612.03..898813.23 rows=119410 width=16)
+                                             ->  Parallel Seq Scan on customer  (cost=0.00..21125.00 rows=312500 width=147)
+                                             ->  Parallel Hash  (cost=898863.05..898863.05 rows=120888 width=16)
+                                                   ->  Parallel Hash Join  (cost=171748.26..898863.05 rows=120888 width=16)
                                                          Hash Cond: (lineitem.l_orderkey = orders.o_orderkey)
-                                                         ->  Parallel Seq Scan on lineitem  (cost=0.00..718960.94 rows=3139145 width=16)
+                                                         ->  Parallel Seq Scan on lineitem  (cost=0.00..718960.94 rows=3106229 width=16)
                                                                Filter: (l_returnflag = 'R'::bpchar)
-                                                         ->  Parallel Hash  (cost=170126.13..170126.13 rows=118872 width=8)
-                                                               ->  Parallel Bitmap Heap Scan on orders  (cost=3912.70..170126.13 rows=118872 width=8)
-                                                                     Recheck Cond: ((o_orderdate >= '1993-12-01'::date) AND (o_orderdate < '1994-03-01'::date))
-                                                                     ->  Bitmap Index Scan on o_od  (cost=0.00..3841.37 rows=285294 width=0)
-                                                                           Index Cond: ((o_orderdate >= '1993-12-01'::date) AND (o_orderdate < '1994-03-01'::date))
+                                                         ->  Parallel Hash  (cost=170228.02..170228.02 rows=121619 width=8)
+                                                               ->  Parallel Bitmap Heap Scan on orders  (cost=4004.25..170228.02 rows=121619 width=8)
+                                                                     Recheck Cond: ((o_orderdate >= '1994-05-01'::date) AND (o_orderdate < '1994-08-01'::date))
+                                                                     ->  Bitmap Index Scan on o_od  (cost=0.00..3931.28 rows=291885 width=0)
+                                                                           Index Cond: ((o_orderdate >= '1994-05-01'::date) AND (o_orderdate < '1994-08-01'::date))
                                        ->  Hash  (cost=1.25..1.25 rows=25 width=108)
                                              ->  Seq Scan on nation  (cost=0.00..1.25 rows=25 width=108)
  JIT:
@@ -692,7 +707,9 @@ LIMIT 20;
 COMMIT;
 COMMIT
 
-Query 10 executed in 0.195 second(s).
+Query 10 execution times in seconds: 0.199,0.191,0.199,0.202,0.204,0.202,0.202,0.188,0.203,0.202
+Average execution time: 0.1992 seconds
+
 BEGIN;
 BEGIN
 EXPLAIN
@@ -706,7 +723,7 @@ from
 where
 	ps_suppkey = s_suppkey
 	and s_nationkey = n_nationkey
-	and n_name = 'SAUDI ARABIA'
+	and n_name = 'PERU'
 group by
 	ps_partkey having
 		sum(ps_supplycost * ps_availqty) > (
@@ -719,7 +736,7 @@ group by
 			where
 				ps_suppkey = s_suppkey
 				and s_nationkey = n_nationkey
-				and n_name = 'SAUDI ARABIA'
+				and n_name = 'PERU'
 		)
 order by
 	value desc;
@@ -727,7 +744,9 @@ ERROR:  column "inf" does not exist
 LINE 17:     sum(ps_supplycost * ps_availqty) *         inf
                                                         ^
 
-Query 11 executed in 0.136 second(s).
+Query 11 execution times in seconds: 0.141,0.141,0.140,0.140,0.142,0.141,0.141,0.140,0.141,0.138
+Average execution time: 0.1405 seconds
+
 BEGIN;
 BEGIN
 EXPLAIN
@@ -750,29 +769,29 @@ from
 	lineitem
 where
 	o_orderkey = l_orderkey
-	and l_shipmode in ('TRUCK', 'RAIL')
+	and l_shipmode in ('AIR', 'FOB')
 	and l_commitdate < l_receiptdate
 	and l_shipdate < l_commitdate
-	and l_receiptdate >= date '1993-01-01'
-	and l_receiptdate < date '1993-01-01' + interval '1 year'
+	and l_receiptdate >= date '1995-01-01'
+	and l_receiptdate < date '1995-01-01' + interval '1 year'
 group by
 	l_shipmode
 order by
 	l_shipmode;
-                                                                                                                                  QUERY PLAN                                                                                                                                   
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Finalize GroupAggregate  (cost=1088060.62..1089264.88 rows=7 width=27)
+                                                                                                                                 QUERY PLAN                                                                                                                                 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Finalize GroupAggregate  (cost=1087970.15..1089155.91 rows=7 width=27)
    Group Key: lineitem.l_shipmode
-   ->  Gather Merge  (cost=1088060.62..1089264.70 rows=14 width=27)
+   ->  Gather Merge  (cost=1087970.15..1089155.73 rows=14 width=27)
          Workers Planned: 2
-         ->  Partial GroupAggregate  (cost=1087060.60..1088263.07 rows=7 width=27)
+         ->  Partial GroupAggregate  (cost=1086970.12..1088154.09 rows=7 width=27)
                Group Key: lineitem.l_shipmode
-               ->  Sort  (cost=1087060.60..1087210.90 rows=60120 width=27)
+               ->  Sort  (cost=1086970.12..1087118.11 rows=59195 width=27)
                      Sort Key: lineitem.l_shipmode
-                     ->  Parallel Hash Join  (cost=219271.50..1082288.40 rows=60120 width=27)
+                     ->  Parallel Hash Join  (cost=219271.50..1082277.97 rows=59195 width=27)
                            Hash Cond: (lineitem.l_orderkey = orders.o_orderkey)
-                           ->  Parallel Seq Scan on lineitem  (cost=0.00..843960.09 rows=60120 width=15)
-                                 Filter: ((l_shipmode = ANY ('{TRUCK,RAIL}'::bpchar[])) AND (l_commitdate < l_receiptdate) AND (l_shipdate < l_commitdate) AND (l_receiptdate >= '1993-01-01'::date) AND (l_receiptdate < '1994-01-01 00:00:00'::timestamp without time zone))
+                           ->  Parallel Seq Scan on lineitem  (cost=0.00..843960.09 rows=59195 width=15)
+                                 Filter: ((l_shipmode = ANY ('{AIR,FOB}'::bpchar[])) AND (l_commitdate < l_receiptdate) AND (l_shipdate < l_commitdate) AND (l_receiptdate >= '1995-01-01'::date) AND (l_receiptdate < '1996-01-01 00:00:00'::timestamp without time zone))
                            ->  Parallel Hash  (cost=161898.00..161898.00 rows=3125000 width=20)
                                  ->  Parallel Seq Scan on orders  (cost=0.00..161898.00 rows=3125000 width=20)
  JIT:
@@ -783,7 +802,9 @@ order by
 COMMIT;
 COMMIT
 
-Query 12 executed in 0.186 second(s).
+Query 12 execution times in seconds: 0.177,0.194,0.196,0.174,0.182,0.193,0.192,0.181,0.192,0.184
+Average execution time: 0.1865 seconds
+
 BEGIN;
 BEGIN
 EXPLAIN
@@ -798,7 +819,7 @@ from
 		from
 			customer left outer join orders on
 				c_custkey = o_custkey
-				and o_comment not like '%pending%packages%'
+				and o_comment not like '%express%accounts%'
 		group by
 			c_custkey
 	) as c_orders (c_custkey, c_count)
@@ -809,22 +830,22 @@ order by
 	c_count desc;
                                                                   QUERY PLAN                                                                   
 -----------------------------------------------------------------------------------------------------------------------------------------------
- Sort  (cost=709674.43..709674.93 rows=200 width=16)
+ Sort  (cost=709674.44..709674.94 rows=200 width=16)
    Sort Key: (count(*)) DESC, (count(orders.o_orderkey)) DESC
    ->  HashAggregate  (cost=709664.79..709666.79 rows=200 width=16)
          Group Key: count(orders.o_orderkey)
-         ->  Finalize HashAggregate  (cost=676266.35..698414.79 rows=750000 width=12)
+         ->  Finalize HashAggregate  (cost=676266.36..698414.79 rows=750000 width=12)
                Group Key: customer.c_custkey
                Planned Partitions: 16
-               ->  Gather  (cost=398505.15..580172.60 rows=1500000 width=12)
+               ->  Gather  (cost=398505.15..580172.61 rows=1500000 width=12)
                      Workers Planned: 2
-                     ->  Partial HashAggregate  (cost=397505.15..429172.60 rows=750000 width=12)
+                     ->  Partial HashAggregate  (cost=397505.15..429172.61 rows=750000 width=12)
                            Group Key: customer.c_custkey
                            Planned Partitions: 16
                            ->  Parallel Hash Right Join  (cost=20279.68..223499.49 rows=3093434 width=8)
                                  Hash Cond: (orders.o_custkey = customer.c_custkey)
                                  ->  Parallel Seq Scan on orders  (cost=0.00..169710.50 rows=3093434 width=8)
-                                       Filter: ((o_comment)::text !~~ '%pending%packages%'::text)
+                                       Filter: ((o_comment)::text !~~ '%express%accounts%'::text)
                                  ->  Parallel Hash  (cost=15152.43..15152.43 rows=312500 width=4)
                                        ->  Parallel Index Only Scan using customer_pkey on customer  (cost=0.42..15152.43 rows=312500 width=4)
  JIT:
@@ -835,7 +856,9 @@ order by
 COMMIT;
 COMMIT
 
-Query 13 executed in 0.173 second(s).
+Query 13 execution times in seconds: 0.175,0.182,0.182,0.190,0.188,0.187,0.186,0.172,0.187,0.193
+Average execution time: 0.1842 seconds
+
 BEGIN;
 BEGIN
 EXPLAIN
@@ -850,22 +873,22 @@ from
 	part
 where
 	l_partkey = p_partkey
-	and l_shipdate >= date '1993-03-01'
-	and l_shipdate < cast(date '1993-03-01' + interval '1 month' as date);
+	and l_shipdate >= date '1996-12-01'
+	and l_shipdate < cast(date '1996-12-01' + interval '1 month' as date);
                                                           QUERY PLAN                                                          
 ------------------------------------------------------------------------------------------------------------------------------
- Finalize Aggregate  (cost=748622.21..748622.23 rows=1 width=32)
-   ->  Gather  (cost=748621.98..748622.19 rows=2 width=64)
+ Finalize Aggregate  (cost=738780.22..738780.24 rows=1 width=32)
+   ->  Gather  (cost=738779.99..738780.20 rows=2 width=64)
          Workers Planned: 2
-         ->  Partial Aggregate  (cost=747621.98..747621.99 rows=1 width=64)
-               ->  Parallel Hash Join  (cost=711051.97..744748.21 rows=164215 width=33)
+         ->  Partial Aggregate  (cost=737779.99..737780.00 rows=1 width=64)
+               ->  Parallel Hash Join  (cost=702420.13..735042.30 rows=156439 width=33)
                      Hash Cond: (part.p_partkey = lineitem.l_partkey)
                      ->  Parallel Seq Scan on part  (cost=0.00..24678.67 rows=416667 width=25)
-                     ->  Parallel Hash  (cost=708999.28..708999.28 rows=164215 width=16)
-                           ->  Parallel Bitmap Heap Scan on lineitem  (cost=5384.14..708999.28 rows=164215 width=16)
-                                 Recheck Cond: ((l_shipdate >= '1993-03-01'::date) AND (l_shipdate < '1993-04-01'::date))
-                                 ->  Bitmap Index Scan on l_sd  (cost=0.00..5285.61 rows=394117 width=0)
-                                       Index Cond: ((l_shipdate >= '1993-03-01'::date) AND (l_shipdate < '1993-04-01'::date))
+                     ->  Parallel Hash  (cost=700457.98..700457.98 rows=156972 width=16)
+                           ->  Parallel Bitmap Heap Scan on lineitem  (cost=5145.96..700457.98 rows=156972 width=16)
+                                 Recheck Cond: ((l_shipdate >= '1996-12-01'::date) AND (l_shipdate < '1997-01-01'::date))
+                                 ->  Bitmap Index Scan on l_sd  (cost=0.00..5051.78 rows=376734 width=0)
+                                       Index Cond: ((l_shipdate >= '1996-12-01'::date) AND (l_shipdate < '1997-01-01'::date))
  JIT:
    Functions: 17
    Options: Inlining true, Optimization true, Expressions true, Deforming true
@@ -874,7 +897,9 @@ where
 COMMIT;
 COMMIT
 
-Query 14 executed in 0.190 second(s).
+Query 14 execution times in seconds: 0.175,0.184,0.192,0.184,0.185,0.195,0.194,0.186,0.194,0.192
+Average execution time: 0.1881 seconds
+
 BEGIN;
 BEGIN
 create or replace view revenue0 (supplier_no, total_revenue) as
@@ -884,8 +909,8 @@ create or replace view revenue0 (supplier_no, total_revenue) as
 	from
 		lineitem
 	where
-		l_shipdate >= '1995-07-01'
-		and l_shipdate < date'1995-07-01' + interval '90 days'
+		l_shipdate >= '1996-06-01'
+		and l_shipdate < date'1996-06-01' + interval '90 days'
 	group by
 		l_suppkey;
 CREATE VIEW
@@ -911,33 +936,33 @@ order by
 	s_suppkey;
                                                                          QUERY PLAN                                                                         
 ------------------------------------------------------------------------------------------------------------------------------------------------------------
- Nested Loop  (cost=1599207.01..1613679.96 rows=246 width=103)
+ Nested Loop  (cost=1597150.99..1611735.86 rows=248 width=103)
    InitPlan 1
-     ->  Aggregate  (cost=806341.42..806341.43 rows=1 width=32)
-           ->  Finalize GroupAggregate  (cost=792865.28..805725.17 rows=49300 width=36)
+     ->  Aggregate  (cost=805364.94..805364.95 rows=1 width=32)
+           ->  Finalize GroupAggregate  (cost=791785.75..804743.98 rows=49677 width=36)
                  Group Key: lineitem_1.l_suppkey
-                 ->  Gather Merge  (cost=792865.28..804369.42 rows=98600 width=36)
+                 ->  Gather Merge  (cost=791785.75..803377.86 rows=99354 width=36)
                        Workers Planned: 2
-                       ->  Sort  (cost=791865.26..791988.51 rows=49300 width=36)
+                       ->  Sort  (cost=790785.73..790909.92 rows=49677 width=36)
                              Sort Key: lineitem_1.l_suppkey
-                             ->  Partial HashAggregate  (cost=782798.28..788022.50 rows=49300 width=36)
+                             ->  Partial HashAggregate  (cost=781820.22..786910.85 rows=49677 width=36)
                                    Group Key: lineitem_1.l_suppkey
                                    Planned Partitions: 4
-                                   ->  Parallel Seq Scan on lineitem lineitem_1  (cost=0.00..750210.72 rows=471856 width=16)
-                                         Filter: ((l_shipdate >= '1995-07-01'::date) AND (l_shipdate < '1995-09-29 00:00:00'::timestamp without time zone))
-   ->  Finalize GroupAggregate  (cost=792865.28..805848.42 rows=246 width=36)
+                                   ->  Parallel Seq Scan on lineitem lineitem_1  (cost=0.00..750210.72 rows=457694 width=16)
+                                         Filter: ((l_shipdate >= '1996-06-01'::date) AND (l_shipdate < '1996-08-30 00:00:00'::timestamp without time zone))
+   ->  Finalize GroupAggregate  (cost=791785.75..804868.17 rows=248 width=36)
          Group Key: lineitem.l_suppkey
          Filter: (sum((lineitem.l_extendedprice * ('1'::numeric - lineitem.l_discount))) = (InitPlan 1).col1)
-         ->  Gather Merge  (cost=792865.28..804369.42 rows=98600 width=36)
+         ->  Gather Merge  (cost=791785.75..803377.86 rows=99354 width=36)
                Workers Planned: 2
-               ->  Sort  (cost=791865.26..791988.51 rows=49300 width=36)
+               ->  Sort  (cost=790785.73..790909.92 rows=49677 width=36)
                      Sort Key: lineitem.l_suppkey
-                     ->  Partial HashAggregate  (cost=782798.28..788022.50 rows=49300 width=36)
+                     ->  Partial HashAggregate  (cost=781820.22..786910.85 rows=49677 width=36)
                            Group Key: lineitem.l_suppkey
                            Planned Partitions: 4
-                           ->  Parallel Seq Scan on lineitem  (cost=0.00..750210.72 rows=471856 width=16)
-                                 Filter: ((l_shipdate >= '1995-07-01'::date) AND (l_shipdate < '1995-09-29 00:00:00'::timestamp without time zone))
-   ->  Index Scan using supplier_pkey on supplier  (cost=0.29..6.05 rows=1 width=71)
+                           ->  Parallel Seq Scan on lineitem  (cost=0.00..750210.72 rows=457694 width=16)
+                                 Filter: ((l_shipdate >= '1996-06-01'::date) AND (l_shipdate < '1996-08-30 00:00:00'::timestamp without time zone))
+   ->  Index Scan using s_sk on supplier  (cost=0.29..6.05 rows=1 width=71)
          Index Cond: (s_suppkey = lineitem.l_suppkey)
  JIT:
    Functions: 25
@@ -949,7 +974,9 @@ DROP VIEW
 COMMIT;
 COMMIT
 
-Query 15 executed in 0.191 second(s).
+Query 15 execution times in seconds: 0.198,0.184,0.178,0.195,0.186,0.193,0.198,0.197,0.192,0.202
+Average execution time: 0.1923 seconds
+
 BEGIN;
 BEGIN
 EXPLAIN
@@ -963,9 +990,9 @@ from
 	part
 where
 	p_partkey = ps_partkey
-	and p_brand <> 'Brand#25'
-	and p_type not like 'MEDIUM PLATED%'
-	and p_size in (32, 9, 23, 11, 45, 10, 17, 31)
+	and p_brand <> 'Brand#23'
+	and p_type not like 'MEDIUM BRUSHED%'
+	and p_size in (45, 12, 4, 20, 29, 8, 11, 34)
 	and ps_suppkey not in (
 		select
 			s_suppkey
@@ -983,29 +1010,29 @@ order by
 	p_brand,
 	p_type,
 	p_size;
-                                                              QUERY PLAN                                                              
---------------------------------------------------------------------------------------------------------------------------------------
- Sort  (cost=175412.10..175611.38 rows=79714 width=44)
+                                                            QUERY PLAN                                                            
+----------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=177624.84..177827.56 rows=81088 width=44)
    Sort Key: (count(DISTINCT partsupp.ps_suppkey)) DESC, part.p_brand, part.p_type, part.p_size
-   ->  GroupAggregate  (cost=128376.25..166468.86 rows=79714 width=44)
+   ->  GroupAggregate  (cost=128904.68..168517.75 rows=81088 width=44)
          Group Key: part.p_brand, part.p_type, part.p_size
-         ->  Gather Merge  (cost=128376.25..162722.68 rows=294904 width=40)
+         ->  Gather Merge  (cost=128904.68..164638.69 rows=306818 width=40)
                Workers Planned: 2
-               ->  Sort  (cost=127376.23..127683.42 rows=122877 width=40)
+               ->  Sort  (cost=127904.65..128224.25 rows=127841 width=40)
                      Sort Key: part.p_brand, part.p_type, part.p_size, partsupp.ps_suppkey
-                     ->  Parallel Hash Join  (cost=26398.50..113628.91 rows=122877 width=40)
+                     ->  Parallel Hash Join  (cost=26574.28..113564.68 rows=127841 width=40)
                            Hash Cond: (partsupp.ps_partkey = part.p_partkey)
-                           ->  Parallel Index Only Scan using partsupp_pkey on partsupp  (cost=1737.44..86780.34 rows=833333 width=8)
+                           ->  Parallel Index Only Scan using ps_pk_sk on partsupp  (cost=1737.44..86540.34 rows=833333 width=8)
                                  Filter: (NOT (ANY (ps_suppkey = (hashed SubPlan 1).col1)))
                                  SubPlan 1
                                    ->  Seq Scan on supplier  (cost=0.00..1737.00 rows=5 width=4)
                                          Filter: ((s_comment)::text ~~ '%Customer%Complaints%'::text)
-                           ->  Parallel Hash  (cost=23893.09..23893.09 rows=61438 width=40)
-                                 ->  Parallel Bitmap Heap Scan on part  (cost=1731.78..23893.09 rows=61438 width=40)
-                                       Recheck Cond: (p_size = ANY ('{32,9,23,11,45,10,17,31}'::integer[]))
-                                       Filter: ((p_brand <> 'Brand#25'::bpchar) AND ((p_type)::text !~~ 'MEDIUM PLATED%'::text))
-                                       ->  Bitmap Index Scan on p_s  (cost=0.00..1694.92 rows=158333 width=0)
-                                             Index Cond: (p_size = ANY ('{32,9,23,11,45,10,17,31}'::integer[]))
+                           ->  Parallel Hash  (cost=24037.84..24037.84 rows=63920 width=40)
+                                 ->  Parallel Bitmap Heap Scan on part  (cost=1809.51..24037.84 rows=63920 width=40)
+                                       Recheck Cond: (p_size = ANY ('{45,12,4,20,29,8,11,34}'::integer[]))
+                                       Filter: ((p_brand <> 'Brand#23'::bpchar) AND ((p_type)::text !~~ 'MEDIUM BRUSHED%'::text))
+                                       ->  Bitmap Index Scan on p_s  (cost=0.00..1771.16 rows=164767 width=0)
+                                             Index Cond: (p_size = ANY ('{45,12,4,20,29,8,11,34}'::integer[]))
  JIT:
    Functions: 25
    Options: Inlining false, Optimization false, Expressions true, Deforming true
@@ -1014,7 +1041,9 @@ order by
 COMMIT;
 COMMIT
 
-Query 16 executed in 0.196 second(s).
+Query 16 execution times in seconds: 0.178,0.186,0.194,0.174,0.188,0.190,0.195,0.194,0.181,0.196
+Average execution time: 0.1876 seconds
+
 BEGIN;
 BEGIN
 EXPLAIN
@@ -1025,8 +1054,8 @@ from
 	part
 where
 	p_partkey = l_partkey
-	and p_brand = 'Brand#53'
-	and p_container = 'JUMBO BOX'
+	and p_brand = 'Brand#32'
+	and p_container = 'SM CASE'
 	and l_quantity < (
 		select
 			0.2 * avg(l_quantity)
@@ -1035,22 +1064,22 @@ where
 		where
 			l_partkey = p_partkey
 	);
-                                                 QUERY PLAN                                                 
-------------------------------------------------------------------------------------------------------------
- Aggregate  (cost=10346451.51..10346451.53 rows=1 width=32)
-   ->  Hash Join  (cost=27872.02..10346427.06 rows=9780 width=8)
+                                                QUERY PLAN                                                
+----------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=970615.13..970615.14 rows=1 width=32)
+   ->  Hash Join  (cost=27879.11..970589.19 rows=10375 width=8)
          Hash Cond: (lineitem.l_partkey = part.p_partkey)
          Join Filter: (lineitem.l_quantity < (SubPlan 1))
          ->  Seq Scan on lineitem  (cost=0.00..862709.96 rows=29999796 width=17)
-         ->  Hash  (cost=27859.80..27859.80 rows=978 width=4)
-               ->  Gather  (cost=1000.00..27859.80 rows=978 width=4)
+         ->  Hash  (cost=27866.10..27866.10 rows=1041 width=4)
+               ->  Gather  (cost=1000.00..27866.10 rows=1041 width=4)
                      Workers Planned: 2
-                     ->  Parallel Seq Scan on part  (cost=0.00..26762.00 rows=408 width=4)
-                           Filter: ((p_brand = 'Brand#53'::bpchar) AND (p_container = 'JUMBO BOX'::bpchar))
+                     ->  Parallel Seq Scan on part  (cost=0.00..26762.00 rows=434 width=4)
+                           Filter: ((p_brand = 'Brand#32'::bpchar) AND (p_container = 'SM CASE'::bpchar))
          SubPlan 1
-           ->  Aggregate  (cost=937709.53..937709.55 rows=1 width=32)
-                 ->  Seq Scan on lineitem lineitem_1  (cost=0.00..937709.45 rows=33 width=5)
-                       Filter: (l_partkey = part.p_partkey)
+           ->  Aggregate  (cost=125.04..125.05 rows=1 width=32)
+                 ->  Index Scan using l_pk on lineitem lineitem_1  (cost=0.44..124.96 rows=30 width=5)
+                       Index Cond: (l_partkey = part.p_partkey)
  JIT:
    Functions: 24
    Options: Inlining true, Optimization true, Expressions true, Deforming true
@@ -1059,7 +1088,9 @@ where
 COMMIT;
 COMMIT
 
-Query 17 executed in 0.188 second(s).
+Query 17 execution times in seconds: 0.191,0.191,0.194,0.193,0.176,0.196,0.196,0.194,0.195,0.190
+Average execution time: 0.1916 seconds
+
 BEGIN;
 BEGIN
 EXPLAIN
@@ -1082,7 +1113,7 @@ where
 			lineitem
 		group by
 			l_orderkey having
-				sum(l_quantity) > 313
+				sum(l_quantity) > 312
 	)
 	and c_custkey = o_custkey
 	and o_orderkey = l_orderkey
@@ -1096,50 +1127,41 @@ order by
 	o_totalprice desc,
 	o_orderdate
 LIMIT 100;
-                                                                                 QUERY PLAN                                                                                 
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Limit  (cost=3403664.69..3403664.94 rows=100 width=71)
-   ->  Sort  (cost=3403664.69..3405052.36 rows=555068 width=71)
+                                                                    QUERY PLAN                                                                     
+---------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=2181130.47..2181130.72 rows=100 width=71)
+   ->  Sort  (cost=2181130.47..2182511.05 rows=552232 width=71)
          Sort Key: orders.o_totalprice DESC, orders.o_orderdate
-         ->  GroupAggregate  (cost=3297269.42..3382450.39 rows=555068 width=71)
+         ->  GroupAggregate  (cost=2038346.72..2160024.56 rows=552232 width=71)
                Group Key: customer.c_custkey, orders.o_orderkey
-               ->  Incremental Sort  (cost=3297269.42..3371349.03 rows=555068 width=44)
-                     Sort Key: customer.c_custkey, orders.o_orderkey
-                     Presorted Key: customer.c_custkey
-                     ->  Merge Join  (cost=3297269.32..3346370.97 rows=555068 width=44)
-                           Merge Cond: (customer.c_custkey = orders.o_custkey)
-                           ->  Index Scan using customer_pkey on customer  (cost=0.42..37514.08 rows=750000 width=23)
-                           ->  Materialize  (cost=3297268.62..3300043.96 rows=555068 width=25)
-                                 ->  Sort  (cost=3297268.62..3298656.29 rows=555068 width=25)
-                                       Sort Key: orders.o_custkey
-                                       ->  Hash Join  (cost=2121714.18..3231026.23 rows=555068 width=25)
-                                             Hash Cond: (lineitem.l_orderkey = orders.o_orderkey)
-                                             ->  Hash Join  (cost=1778370.18..2719830.40 rows=9999932 width=13)
-                                                   Hash Cond: (lineitem.l_orderkey = lineitem_1.l_orderkey)
-                                                   ->  Seq Scan on lineitem  (cost=0.00..862709.96 rows=29999796 width=9)
-                                                   ->  Hash  (cost=1776635.58..1776635.58 rows=138768 width=4)
-                                                         ->  Finalize GroupAggregate  (cost=1667002.07..1776635.58 rows=138768 width=4)
-                                                               Group Key: lineitem_1.l_orderkey
-                                                               Filter: (sum(lineitem_1.l_quantity) > '313'::numeric)
-                                                               ->  Gather Merge  (cost=1667002.07..1764146.46 rows=832608 width=36)
-                                                                     Workers Planned: 2
-                                                                     ->  Sort  (cost=1666002.05..1667042.81 rows=416304 width=36)
-                                                                           Sort Key: lineitem_1.l_orderkey
-                                                                           ->  Partial HashAggregate  (cost=1488486.95..1615760.24 rows=416304 width=36)
-                                                                                 Group Key: lineitem_1.l_orderkey
-                                                                                 Planned Partitions: 16
-                                                                                 ->  Parallel Seq Scan on lineitem lineitem_1  (cost=0.00..687711.15 rows=12499915 width=9)
-                                             ->  Hash  (cost=205648.00..205648.00 rows=7500000 width=20)
-                                                   ->  Seq Scan on orders  (cost=0.00..205648.00 rows=7500000 width=20)
+               ->  Merge Join  (cost=2038346.72..2148979.92 rows=552232 width=44)
+                     Merge Cond: (orders.o_custkey = customer.c_custkey)
+                     ->  Gather Merge  (cost=2038344.67..2102661.18 rows=552232 width=25)
+                           Workers Planned: 2
+                           ->  Sort  (cost=2037344.64..2037919.88 rows=230097 width=25)
+                                 Sort Key: orders.o_custkey, orders.o_orderkey
+                                 ->  Nested Loop  (cost=1.31..2011346.84 rows=230097 width=25)
+                                       ->  Merge Join  (cost=0.87..1652065.31 rows=57525 width=24)
+                                             Merge Cond: (orders.o_orderkey = lineitem_1.l_orderkey)
+                                             ->  Parallel Index Scan using orders_pkey on orders  (cost=0.43..284332.40 rows=3125000 width=20)
+                                             ->  GroupAggregate  (cost=0.44..1359000.01 rows=138059 width=4)
+                                                   Group Key: lineitem_1.l_orderkey
+                                                   Filter: (sum(lineitem_1.l_quantity) > '312'::numeric)
+                                                   ->  Index Scan using l_ok on lineitem lineitem_1  (cost=0.44..1202788.38 rows=29999796 width=9)
+                                       ->  Index Scan using l_ok on lineitem  (cost=0.44..5.53 rows=72 width=9)
+                                             Index Cond: (l_orderkey = orders.o_orderkey)
+                     ->  Index Scan using customer_pkey on customer  (cost=0.42..37541.43 rows=750000 width=23)
  JIT:
-   Functions: 38
+   Functions: 24
    Options: Inlining true, Optimization true, Expressions true, Deforming true
-(36 rows)
+(25 rows)
 
 COMMIT;
 COMMIT
 
-Query 18 executed in 0.189 second(s).
+Query 18 execution times in seconds: 0.195,0.182,0.190,0.199,0.196,0.197,0.190,0.180,0.197,0.195
+Average execution time: 0.1921 seconds
+
 BEGIN;
 BEGIN
 EXPLAIN
@@ -1151,7 +1173,7 @@ from
 where
 	(
 		p_partkey = l_partkey
-		and p_brand = 'Brand#41'
+		and p_brand = 'Brand#24'
 		and p_container in ('SM CASE', 'SM BOX', 'SM PACK', 'SM PKG')
 		and l_quantity >= 3 and l_quantity <= 3+10
 		and p_size between 1 and 5
@@ -1161,9 +1183,9 @@ where
 	or
 	(
 		p_partkey = l_partkey
-		and p_brand = 'Brand#31'
+		and p_brand = 'Brand#15'
 		and p_container in ('MED BAG', 'MED BOX', 'MED PKG', 'MED PACK')
-		and l_quantity >= 16 and l_quantity <= 16+10
+		and l_quantity >= 11 and l_quantity <= 11+10
 		and p_size between 1 and 10
 		and l_shipmode in ('AIR', 'AIR REG')
 		and l_shipinstruct = 'DELIVER IN PERSON'
@@ -1171,36 +1193,36 @@ where
 	or
 	(
 		p_partkey = l_partkey
-		and p_brand = 'Brand#51'
+		and p_brand = 'Brand#11'
 		and p_container in ('LG CASE', 'LG BOX', 'LG PACK', 'LG PKG')
-		and l_quantity >= 20 and l_quantity <= 20+10
+		and l_quantity >= 23 and l_quantity <= 23+10
 		and p_size between 1 and 15
 		and l_shipmode in ('AIR', 'AIR REG')
 		and l_shipinstruct = 'DELIVER IN PERSON'
 	);
-                                                                                                                                                                                                                                                                                                                                                                           QUERY PLAN                                                                                                                                                                                                                                                                                                                                                                           
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Finalize Aggregate  (cost=977571.15..977571.16 rows=1 width=32)
-   ->  Gather  (cost=977570.93..977571.14 rows=2 width=32)
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              QUERY PLAN                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Finalize Aggregate  (cost=160449.17..160449.18 rows=1 width=32)
+   ->  Gather  (cost=160448.95..160449.16 rows=2 width=32)
          Workers Planned: 2
-         ->  Partial Aggregate  (cost=976570.93..976570.94 rows=1 width=32)
-               ->  Parallel Hash Join  (cost=38233.01..976569.10 rows=243 width=12)
-                     Hash Cond: (lineitem.l_partkey = part.p_partkey)
-                     Join Filter: (((part.p_brand = 'Brand#41'::bpchar) AND (part.p_container = ANY ('{"SM CASE","SM BOX","SM PACK","SM PKG"}'::bpchar[])) AND (lineitem.l_quantity >= '3'::numeric) AND (lineitem.l_quantity <= '13'::numeric) AND (part.p_size <= 5)) OR ((part.p_brand = 'Brand#31'::bpchar) AND (part.p_container = ANY ('{"MED BAG","MED BOX","MED PKG","MED PACK"}'::bpchar[])) AND (lineitem.l_quantity >= '16'::numeric) AND (lineitem.l_quantity <= '26'::numeric) AND (part.p_size <= 10)) OR ((part.p_brand = 'Brand#51'::bpchar) AND (part.p_container = ANY ('{"LG CASE","LG BOX","LG PACK","LG PKG"}'::bpchar[])) AND (lineitem.l_quantity >= '20'::numeric) AND (lineitem.l_quantity <= '30'::numeric) AND (part.p_size <= 15)))
-                     ->  Parallel Seq Scan on lineitem  (cost=0.00..937709.45 rows=238722 width=21)
-                           Filter: ((l_shipmode = ANY ('{AIR,"AIR REG"}'::bpchar[])) AND (l_shipinstruct = 'DELIVER IN PERSON'::bpchar) AND (((l_quantity >= '3'::numeric) AND (l_quantity <= '13'::numeric)) OR ((l_quantity >= '16'::numeric) AND (l_quantity <= '26'::numeric)) OR ((l_quantity >= '20'::numeric) AND (l_quantity <= '30'::numeric))))
-                     ->  Parallel Hash  (cost=38220.33..38220.33 rows=1014 width=30)
-                           ->  Parallel Seq Scan on part  (cost=0.00..38220.33 rows=1014 width=30)
-                                 Filter: ((p_size >= 1) AND (((p_brand = 'Brand#41'::bpchar) AND (p_container = ANY ('{"SM CASE","SM BOX","SM PACK","SM PKG"}'::bpchar[])) AND (p_size <= 5)) OR ((p_brand = 'Brand#31'::bpchar) AND (p_container = ANY ('{"MED BAG","MED BOX","MED PKG","MED PACK"}'::bpchar[])) AND (p_size <= 10)) OR ((p_brand = 'Brand#51'::bpchar) AND (p_container = ANY ('{"LG CASE","LG BOX","LG PACK","LG PKG"}'::bpchar[])) AND (p_size <= 15))))
+         ->  Partial Aggregate  (cost=159448.95..159448.96 rows=1 width=32)
+               ->  Nested Loop  (cost=0.44..159447.18 rows=236 width=12)
+                     ->  Parallel Seq Scan on part  (cost=0.00..38220.33 rows=1015 width=30)
+                           Filter: ((p_size >= 1) AND (((p_brand = 'Brand#24'::bpchar) AND (p_container = ANY ('{"SM CASE","SM BOX","SM PACK","SM PKG"}'::bpchar[])) AND (p_size <= 5)) OR ((p_brand = 'Brand#15'::bpchar) AND (p_container = ANY ('{"MED BAG","MED BOX","MED PKG","MED PACK"}'::bpchar[])) AND (p_size <= 10)) OR ((p_brand = 'Brand#11'::bpchar) AND (p_container = ANY ('{"LG CASE","LG BOX","LG PACK","LG PKG"}'::bpchar[])) AND (p_size <= 15))))
+                     ->  Index Scan using l_pk on lineitem  (cost=0.44..119.43 rows=1 width=21)
+                           Index Cond: (l_partkey = part.p_partkey)
+                           Filter: ((l_shipmode = ANY ('{AIR,"AIR REG"}'::bpchar[])) AND (l_shipinstruct = 'DELIVER IN PERSON'::bpchar) AND (((l_quantity >= '3'::numeric) AND (l_quantity <= '13'::numeric)) OR ((l_quantity >= '11'::numeric) AND (l_quantity <= '21'::numeric)) OR ((l_quantity >= '23'::numeric) AND (l_quantity <= '33'::numeric))) AND (((part.p_brand = 'Brand#24'::bpchar) AND (part.p_container = ANY ('{"SM CASE","SM BOX","SM PACK","SM PKG"}'::bpchar[])) AND (l_quantity >= '3'::numeric) AND (l_quantity <= '13'::numeric) AND (part.p_size <= 5)) OR ((part.p_brand = 'Brand#15'::bpchar) AND (part.p_container = ANY ('{"MED BAG","MED BOX","MED PKG","MED PACK"}'::bpchar[])) AND (l_quantity >= '11'::numeric) AND (l_quantity <= '21'::numeric) AND (part.p_size <= 10)) OR ((part.p_brand = 'Brand#11'::bpchar) AND (part.p_container = ANY ('{"LG CASE","LG BOX","LG PACK","LG PKG"}'::bpchar[])) AND (l_quantity >= '23'::numeric) AND (l_quantity <= '33'::numeric) AND (part.p_size <= 15))))
  JIT:
-   Functions: 21
-   Options: Inlining true, Optimization true, Expressions true, Deforming true
-(15 rows)
+   Functions: 12
+   Options: Inlining false, Optimization false, Expressions true, Deforming true
+(13 rows)
 
 COMMIT;
 COMMIT
 
-Query 19 executed in 0.200 second(s).
+Query 19 execution times in seconds: 0.199,0.190,0.193,0.196,0.200,0.197,0.197,0.217,0.199,0.191
+Average execution time: 0.1979 seconds
+
 BEGIN;
 BEGIN
 EXPLAIN
@@ -1223,7 +1245,7 @@ where
 				from
 					part
 				where
-					p_name like 'chiffon%'
+					p_name like 'metallic%'
 			)
 			and ps_availqty > (
 				select
@@ -1238,43 +1260,45 @@ where
 			)
 	)
 	and s_nationkey = n_nationkey
-	and n_name = 'EGYPT'
+	and n_name = 'ARGENTINA'
 order by
 	s_name;
-                                                                                            QUERY PLAN                                                                                            
---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
- Nested Loop Semi Join  (cost=2558.15..117445736873.66 rows=538 width=51)
-   Join Filter: (supplier.s_suppkey = partsupp.ps_suppkey)
-   ->  Gather Merge  (cost=2557.72..2785.66 rows=2000 width=55)
-         Workers Planned: 1
-         ->  Sort  (cost=1557.71..1560.65 rows=1176 width=55)
-               Sort Key: supplier.s_name
-               ->  Hash Join  (cost=1.32..1497.73 rows=1176 width=55)
-                     Hash Cond: (supplier.s_nationkey = nation.n_nationkey)
-                     ->  Parallel Seq Scan on supplier  (cost=0.00..1406.12 rows=29412 width=59)
-                     ->  Hash  (cost=1.31..1.31 rows=1 width=4)
-                           ->  Seq Scan on nation  (cost=0.00..1.31 rows=1 width=4)
-                                 Filter: (n_name = 'EGYPT'::bpchar)
-   ->  Materialize  (cost=0.43..117445330081.68 rows=13468 width=4)
-         ->  Nested Loop  (cost=0.43..117445330014.34 rows=13468 width=4)
-               ->  Seq Scan on part  (cost=0.00..33012.00 rows=10101 width=4)
-                     Filter: ((p_name)::text ~~ 'chiffon%'::text)
-               ->  Index Scan using partsupp_pkey on partsupp  (cost=0.43..11627096.00 rows=3 width=8)
-                     Index Cond: (ps_partkey = part.p_partkey)
-                     Filter: ((ps_availqty)::numeric > (SubPlan 1))
-                     SubPlan 1
-                       ->  Aggregate  (cost=1162707.92..1162707.94 rows=1 width=32)
-                             ->  Seq Scan on lineitem  (cost=0.00..1162707.92 rows=1 width=5)
-                                   Filter: ((l_shipdate >= '1995-01-01'::date) AND (l_shipdate < '1996-01-01'::date) AND (l_partkey = partsupp.ps_partkey) AND (l_suppkey = partsupp.ps_suppkey))
+                                                          QUERY PLAN                                                           
+-------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=872195.00..872196.35 rows=539 width=51)
+   Sort Key: supplier.s_name
+   ->  Hash Semi Join  (cost=870969.36..872170.54 rows=539 width=51)
+         Hash Cond: (supplier.s_suppkey = partsupp.ps_suppkey)
+         ->  Nested Loop  (cost=23.79..1207.67 rows=2000 width=55)
+               ->  Seq Scan on nation  (cost=0.00..1.31 rows=1 width=4)
+                     Filter: (n_name = 'ARGENTINA'::bpchar)
+               ->  Bitmap Heap Scan on supplier  (cost=23.79..1186.36 rows=2000 width=59)
+                     Recheck Cond: (s_nationkey = nation.n_nationkey)
+                     ->  Bitmap Index Scan on s_nk  (cost=0.00..23.29 rows=2000 width=0)
+                           Index Cond: (s_nationkey = nation.n_nationkey)
+         ->  Hash  (cost=870777.22..870777.22 rows=13468 width=4)
+               ->  Nested Loop  (cost=0.43..870777.22 rows=13468 width=4)
+                     ->  Seq Scan on part  (cost=0.00..33012.00 rows=10101 width=4)
+                           Filter: ((p_name)::text ~~ 'metallic%'::text)
+                     ->  Index Scan using ps_pk on partsupp  (cost=0.43..82.91 rows=3 width=8)
+                           Index Cond: (ps_partkey = part.p_partkey)
+                           Filter: ((ps_availqty)::numeric > (SubPlan 1))
+                           SubPlan 1
+                             ->  Aggregate  (cost=8.47..8.48 rows=1 width=32)
+                                   ->  Index Scan using l_sk_pk on lineitem  (cost=0.44..8.46 rows=1 width=5)
+                                         Index Cond: ((l_suppkey = partsupp.ps_suppkey) AND (l_partkey = partsupp.ps_partkey))
+                                         Filter: ((l_shipdate >= '1995-01-01'::date) AND (l_shipdate < '1996-01-01'::date))
  JIT:
-   Functions: 32
+   Functions: 30
    Options: Inlining true, Optimization true, Expressions true, Deforming true
 (26 rows)
 
 COMMIT;
 COMMIT
 
-Query 20 executed in 0.182 second(s).
+Query 20 execution times in seconds: 0.181,0.181,0.177,0.195,0.181,0.196,0.178,0.166,0.171,0.196
+Average execution time: 0.1822 seconds
+
 BEGIN;
 BEGIN
 EXPLAIN
@@ -1311,57 +1335,58 @@ where
 			and l3.l_receiptdate > l3.l_commitdate
 	)
 	and s_nationkey = n_nationkey
-	and n_name = 'CANADA'
+	and n_name = 'RUSSIA'
 group by
 	s_name
 order by
 	numwait desc,
 	s_name
 LIMIT 100;
-                                                                   QUERY PLAN                                                                    
--------------------------------------------------------------------------------------------------------------------------------------------------
- Limit  (cost=1496027.29..1496027.30 rows=1 width=34)
-   ->  Sort  (cost=1496027.29..1496027.30 rows=1 width=34)
+                                                                QUERY PLAN                                                                 
+-------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=950246.67..950246.67 rows=1 width=34)
+   ->  Sort  (cost=950246.67..950246.67 rows=1 width=34)
          Sort Key: (count(*)) DESC, supplier.s_name
-         ->  GroupAggregate  (cost=1496027.26..1496027.28 rows=1 width=34)
+         ->  GroupAggregate  (cost=950246.64..950246.66 rows=1 width=34)
                Group Key: supplier.s_name
-               ->  Sort  (cost=1496027.26..1496027.27 rows=1 width=26)
+               ->  Sort  (cost=950246.64..950246.64 rows=1 width=26)
                      Sort Key: supplier.s_name
-                     ->  Gather  (cost=1268889.43..1496027.25 rows=1 width=26)
-                           Workers Planned: 2
-                           ->  Nested Loop Anti Join  (cost=1267889.43..1495027.15 rows=1 width=26)
-                                 ->  Parallel Hash Join  (cost=1267888.99..1456955.02 rows=4535 width=34)
-                                       Hash Cond: (orders.o_orderkey = l1.l_orderkey)
-                                       ->  Parallel Seq Scan on orders  (cost=0.00..169710.50 rows=1531771 width=4)
-                                             Filter: (o_orderstatus = 'F'::bpchar)
-                                       ->  Parallel Hash  (cost=1264502.68..1264502.68 rows=166665 width=38)
-                                             ->  Nested Loop Semi Join  (cost=1512.87..1264502.68 rows=166665 width=38)
-                                                   ->  Parallel Hash Join  (cost=1512.43..737078.25 rows=166665 width=34)
-                                                         Hash Cond: (l1.l_suppkey = supplier.s_suppkey)
-                                                         ->  Parallel Seq Scan on lineitem l1  (cost=0.00..718960.94 rows=4166638 width=8)
-                                                               Filter: (l_receiptdate > l_commitdate)
-                                                         ->  Parallel Hash  (cost=1497.73..1497.73 rows=1176 width=30)
-                                                               ->  Hash Join  (cost=1.32..1497.73 rows=1176 width=30)
-                                                                     Hash Cond: (supplier.s_nationkey = nation.n_nationkey)
-                                                                     ->  Parallel Seq Scan on supplier  (cost=0.00..1406.12 rows=29412 width=34)
-                                                                     ->  Hash  (cost=1.31..1.31 rows=1 width=4)
-                                                                           ->  Seq Scan on nation  (cost=0.00..1.31 rows=1 width=4)
-                                                                                 Filter: (n_name = 'CANADA'::bpchar)
-                                                   ->  Index Scan using lineitem_pkey on lineitem l2  (cost=0.44..99.32 rows=72 width=8)
-                                                         Index Cond: (l_orderkey = l1.l_orderkey)
-                                                         Filter: (l_suppkey <> l1.l_suppkey)
-                                 ->  Index Scan using lineitem_pkey on lineitem l3  (cost=0.44..99.50 rows=24 width=8)
+                     ->  Nested Loop  (cost=2513.74..950246.63 rows=1 width=26)
+                           ->  Nested Loop Semi Join  (cost=2513.31..950240.45 rows=1 width=34)
+                                 ->  Gather  (cost=2512.87..950229.91 rows=1 width=34)
+                                       Workers Planned: 2
+                                       ->  Nested Loop Anti Join  (cost=1512.87..949229.81 rows=1 width=34)
+                                             ->  Parallel Hash Join  (cost=1512.43..737078.25 rows=166665 width=34)
+                                                   Hash Cond: (l1.l_suppkey = supplier.s_suppkey)
+                                                   ->  Parallel Seq Scan on lineitem l1  (cost=0.00..718960.94 rows=4166638 width=8)
+                                                         Filter: (l_receiptdate > l_commitdate)
+                                                   ->  Parallel Hash  (cost=1497.73..1497.73 rows=1176 width=30)
+                                                         ->  Hash Join  (cost=1.32..1497.73 rows=1176 width=30)
+                                                               Hash Cond: (supplier.s_nationkey = nation.n_nationkey)
+                                                               ->  Parallel Seq Scan on supplier  (cost=0.00..1406.12 rows=29412 width=34)
+                                                               ->  Hash  (cost=1.31..1.31 rows=1 width=4)
+                                                                     ->  Seq Scan on nation  (cost=0.00..1.31 rows=1 width=4)
+                                                                           Filter: (n_name = 'RUSSIA'::bpchar)
+                                             ->  Index Scan using l_ok on lineitem l3  (cost=0.44..10.70 rows=24 width=8)
+                                                   Index Cond: (l_orderkey = l1.l_orderkey)
+                                                   Filter: ((l_receiptdate > l_commitdate) AND (l_suppkey <> l1.l_suppkey))
+                                 ->  Index Scan using l_ok on lineitem l2  (cost=0.44..10.52 rows=72 width=8)
                                        Index Cond: (l_orderkey = l1.l_orderkey)
-                                       Filter: ((l_receiptdate > l_commitdate) AND (l_suppkey <> l1.l_suppkey))
+                                       Filter: (l_suppkey <> l1.l_suppkey)
+                           ->  Index Scan using orders_pkey on orders  (cost=0.43..6.18 rows=1 width=4)
+                                 Index Cond: (o_orderkey = l1.l_orderkey)
+                                 Filter: (o_orderstatus = 'F'::bpchar)
  JIT:
-   Functions: 49
+   Functions: 44
    Options: Inlining true, Optimization true, Expressions true, Deforming true
-(36 rows)
+(35 rows)
 
 COMMIT;
 COMMIT
 
-Query 21 executed in 0.195 second(s).
+Query 21 execution times in seconds: 0.185,0.197,0.200,0.203,0.195,0.184,0.185,0.198,0.197,0.198
+Average execution time: 0.1942 seconds
+
 BEGIN;
 BEGIN
 EXPLAIN
@@ -1378,7 +1403,7 @@ from
 			customer
 		where
 			substring(c_phone from 1 for 2) in
-				('28', '30', '33', '29', '27', '13', '31')
+				('10', '26', '13', '34', '30', '33', '17')
 			and c_acctbal > (
 				select
 					avg(c_acctbal)
@@ -1387,7 +1412,7 @@ from
 				where
 					c_acctbal > 0.00
 					and substring(c_phone from 1 for 2) in
-						('28', '30', '33', '29', '27', '13', '31')
+						('10', '26', '13', '34', '30', '33', '17')
 			)
 			and not exists (
 				select
@@ -1404,37 +1429,35 @@ order by
 	cntrycode;
                                                                QUERY PLAN                                                                
 -----------------------------------------------------------------------------------------------------------------------------------------
- Finalize GroupAggregate  (cost=243768.74..244266.57 rows=3730 width=72)
+ Finalize GroupAggregate  (cost=56181.51..56692.16 rows=3826 width=72)
    Group Key: (SUBSTRING(customer.c_phone FROM 1 FOR 2))
    InitPlan 1
-     ->  Finalize Aggregate  (cost=27228.23..27228.24 rows=1 width=32)
-           ->  Gather  (cost=27228.01..27228.22 rows=2 width=32)
+     ->  Finalize Aggregate  (cost=27228.14..27228.15 rows=1 width=32)
+           ->  Gather  (cost=27227.91..27228.12 rows=2 width=32)
                  Workers Planned: 2
-                 ->  Partial Aggregate  (cost=26228.01..26228.02 rows=1 width=32)
-                       ->  Parallel Seq Scan on customer customer_1  (cost=0.00..26203.12 rows=9953 width=6)
-                             Filter: ((c_acctbal > 0.00) AND (SUBSTRING(c_phone FROM 1 FOR 2) = ANY ('{28,30,33,29,27,13,31}'::text[])))
-   ->  Gather Merge  (cost=216540.50..216941.98 rows=3108 width=72)
+                 ->  Partial Aggregate  (cost=26227.91..26227.92 rows=1 width=32)
+                       ->  Parallel Seq Scan on customer customer_1  (cost=0.00..26203.12 rows=9915 width=6)
+                             Filter: ((c_acctbal > 0.00) AND (SUBSTRING(c_phone FROM 1 FOR 2) = ANY ('{10,26,13,34,30,33,17}'::text[])))
+   ->  Gather Merge  (cost=28953.37..29365.17 rows=3188 width=72)
          Workers Planned: 2
-         ->  Partial GroupAggregate  (cost=215540.48..215583.21 rows=1554 width=72)
+         ->  Partial GroupAggregate  (cost=27953.34..27997.18 rows=1594 width=72)
                Group Key: (SUBSTRING(customer.c_phone FROM 1 FOR 2))
-               ->  Sort  (cost=215540.48..215544.36 rows=1554 width=38)
+               ->  Sort  (cost=27953.34..27957.33 rows=1594 width=38)
                      Sort Key: (SUBSTRING(customer.c_phone FROM 1 FOR 2))
-                     ->  Parallel Hash Right Anti Join  (cost=25405.56..215458.10 rows=1554 width=38)
-                           Hash Cond: (orders.o_custkey = customer.c_custkey)
-                           ->  Parallel Seq Scan on orders  (cost=0.00..161898.00 rows=3125000 width=4)
-                           ->  Parallel Hash  (cost=25359.99..25359.99 rows=3646 width=26)
-                                 ->  Parallel Bitmap Heap Scan on customer  (cost=4625.61..25359.99 rows=3646 width=26)
-                                       Recheck Cond: (c_acctbal > (InitPlan 1).col1)
-                                       Filter: (SUBSTRING(c_phone FROM 1 FOR 2) = ANY ('{28,30,33,29,27,13,31}'::text[]))
-                                       ->  Bitmap Index Scan on c_acb  (cost=0.00..4623.43 rows=250000 width=0)
-                                             Index Cond: (c_acctbal > (InitPlan 1).col1)
- JIT:
-   Functions: 29
-   Options: Inlining false, Optimization false, Expressions true, Deforming true
-(27 rows)
+                     ->  Nested Loop Anti Join  (cost=4626.05..27868.55 rows=1594 width=38)
+                           ->  Parallel Bitmap Heap Scan on customer  (cost=4625.61..25359.99 rows=3646 width=26)
+                                 Recheck Cond: (c_acctbal > (InitPlan 1).col1)
+                                 Filter: (SUBSTRING(c_phone FROM 1 FOR 2) = ANY ('{10,26,13,34,30,33,17}'::text[]))
+                                 ->  Bitmap Index Scan on c_acb  (cost=0.00..4623.43 rows=250000 width=0)
+                                       Index Cond: (c_acctbal > (InitPlan 1).col1)
+                           ->  Index Only Scan using o_ck on orders  (cost=0.43..3.31 rows=18 width=4)
+                                 Index Cond: (o_custkey = customer.c_custkey)
+(23 rows)
 
 COMMIT;
 COMMIT
 
-Query 22 executed in 0.176 second(s).
+Query 22 execution times in seconds: 0.153,0.144,0.145,0.146,0.147,0.142,0.149,0.145,0.149,0.146
+Average execution time: 0.1466 seconds
+
 
